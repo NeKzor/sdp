@@ -1,0 +1,40 @@
+name: Deno CI
+
+on:
+  push:
+    branches: ["master"]
+    paths:
+      - "src/**/*.ts"
+      - "tests/**/*.ts"
+  pull_request:
+    branches: ["master"]
+    paths:
+      - "src/**/*.ts"
+      - "tests/**/*.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+
+    steps:
+      - uses: checkout@v3
+
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - run: deno fmt --check
+
+      - run: deno lint
+
+      - run: deno test -A

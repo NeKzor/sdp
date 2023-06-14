@@ -45,6 +45,7 @@ export class SoundInfo {
         if (this.flags !== SoundFlags.Stop) {
             if (buf.readBoolean()) {
                 this.sequenceNumber = 0;
+                // deno-lint-ignore no-dupe-else-if
             } else if (buf.readBoolean()) {
                 this.sequenceNumber = 1;
             } else {

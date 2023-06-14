@@ -16,8 +16,7 @@ export class StringTable {
         this.entries = [];
         this.classes = [];
 
-        // deno-lint-ignore no-explicit-any
-        const EntryType = (StringTableEntryTypes as any)[this.name];
+        const EntryType = StringTableEntryTypes[this.name];
 
         let entries = buf.readInt16();
         while (entries--) {
@@ -49,12 +48,11 @@ export class StringTable {
 
 export class StringTableEntry {
     name: string;
-    data: any;
+    data?: StringTableEntries | Uint8Array;
     constructor(name: string) {
         this.name = name;
     }
-    // deno-lint-ignore no-explicit-any
-    read(buf: SourceDemoBuffer, type: any, demo: SourceDemo) {
+    read(buf: SourceDemoBuffer, type: StringTableEntryType | undefined, demo: SourceDemo) {
         const length = buf.readInt16();
         if (type) {
             this.data = new type();
@@ -112,4 +110,9 @@ export class PlayerInfo {
     }
 }
 
-export const StringTableEntryTypes = { userinfo: PlayerInfo };
+export type StringTableEntries = PlayerInfo;
+export type StringTableEntryType = typeof PlayerInfo;
+
+export const StringTableEntryTypes: Record<string, StringTableEntryType> = {
+    userinfo: PlayerInfo,
+};

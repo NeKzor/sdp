@@ -26,7 +26,7 @@ export class SourceDemo {
     playbackTicks?: number;
     playbackFrames?: number;
     signOnLength?: number;
-    messages?: any[];
+    messages?: Message[];
     game?: SourceGame;
     gameEventManager?: GameEventManager;
     static default() {

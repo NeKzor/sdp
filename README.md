@@ -5,17 +5,17 @@ Simple Source Engine demo parser.
 ## Features
 
 - Supports for multiple engines
-    - Portal 2
-    - Half-Life 2
+  - Portal 2
+  - Half-Life 2
 - Optional decoding of message data
-    - [User command info]
-    - [NET/SVC messages]
-    - [Send tables]
-    - [String tables]
-    - [Game events]
+  - [User command info]
+  - [NET/SVC messages]
+  - [Send tables]
+  - [String tables]
+  - [Game events]
 - Speedrun timing
-    - Rules for Portal, Portal 2 and mods
-    - [SAR] timing
+  - Rules for Portal, Portal 2 and mods
+  - [SAR] timing
 
 [User command info]: https://nekz.me/dem/classes/usercmdinfo.html
 [NET/SVC messages]: https://nekz.me/dem/classes/netsvc.html
@@ -57,7 +57,7 @@ console.log(demo);
 ### Jump Stats
 
 ```ts
-import { SourceDemoParser, DemoMessages } from 'sdp.js';
+import { DemoMessages, SourceDemoParser } from 'sdp.js';
 
 const demo = SourceDemoParser.default()
     .setOptions({ userCmds: true })

@@ -1,3 +1,6 @@
+[![Deno CI](https://github.com/NeKzor/sdp/actions/workflows/deno.yml/badge.svg)](https://github.com/NeKzor/sdp/actions/workflows/deno.yml)
+[![Release CD](https://github.com/NeKzor/sdp/actions/workflows/release.yml/badge.svg)](https://github.com/NeKzor/sdp/actions/workflows/release.yml)
+
 # sdp
 
 Simple Source Engine demo parser.

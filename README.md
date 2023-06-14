@@ -32,7 +32,7 @@ Simple Source Engine demo parser.
 ### Header Only
 
 ```ts
-import { SourceDemoParser } from 'sdp';
+import { SourceDemoParser } from '@nekz/sdp/mod.ts';
 
 const demo = SourceDemoParser.default()
     .setOptions({ messages: false })
@@ -60,18 +60,19 @@ console.log(demo);
 ### Jump Stats
 
 ```ts
-import { DemoMessages, SourceDemoParser } from 'sdp.js';
+import { DemoMessages, SourceDemoParser } from '@nekz/sdp/mod.ts';
+import { UserCmd } from '@nekz/sdp/messages.ts';
 
 const demo = SourceDemoParser.default()
     .setOptions({ userCmds: true })
-    .parse(Deno.readFileSync(file));
+    .parse(Deno.readFileSync('demo.dem'));
 
 const IN_JUMP = 1 << 1;
 
 const registeredJumps = demo
-    .findMessages(DemoMessages.UserCmd)
-    .filter(({ userCmd: { buttons } }) => {
-        return buttons && (buttons & IN_JUMP);
+    .findMessages<UserCmd>(DemoMessages.UserCmd)
+    .filter(({ userCmd }) => {
+        return userCmd!.buttons! & IN_JUMP;
     });
 
 console.log('registered jumps:', registeredJumps.length);

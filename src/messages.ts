@@ -42,7 +42,7 @@ export class Message {
         this.slot = slot;
         return this;
     }
-    read(_buf: SourceDemoBuffer, _demo: SourceDemo) {
+    read(_buf: SourceDemoBuffer, _demo: SourceDemo): Message {
         throw new Error(`read() for ${this.constructor.name} not implemented!`);
     }
 }
@@ -56,19 +56,19 @@ export class Packet extends Message {
     constructor(type: number) {
         super(type);
     }
-    findPacket(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
+    findPacket<T extends NetMessage>(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
         const byType = type instanceof NetMessage
             ? (packet: NetMessage) => packet instanceof type
             : (packet: NetMessage) => (type as (packet: NetMessage) => boolean)(packet);
 
-        return (this.packets ?? []).find(byType);
+        return (this.packets ?? []).find(byType) as T | undefined;
     }
-    findPackets(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
+    findPackets<T extends NetMessage>(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
         const byType = type instanceof NetMessage
             ? (packet: NetMessage) => packet instanceof type
             : (packet: NetMessage) => (type as (packet: NetMessage) => boolean)(packet);
 
-        return (this.packets ?? []).filter(byType);
+        return (this.packets ?? []).filter(byType) as T[];
     }
     read(buf: SourceDemoBuffer, demo: SourceDemo) {
         let mssc = demo.demoProtocol === 4 ? 2 : 1;

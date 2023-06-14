@@ -35,43 +35,43 @@ export class SourceDemo {
     isNewEngine() {
         return this.demoProtocol === 4;
     }
-    findMessage(type: typeof Message | ((msg: Message) => boolean)) {
+    findMessage<T extends Message>(type: typeof Message | ((msg: Message) => boolean)) {
         const byType = type.prototype instanceof Message
             ? (msg: Message) => msg instanceof type
             : (msg: Message) => (type as (msg: Message) => boolean)(msg);
-        return (this.messages ?? []).find(byType);
+        return (this.messages ?? []).find(byType) as T | undefined;
     }
-    findMessages(type: typeof Message | ((msg: Message) => boolean)) {
+    findMessages<T extends Message>(type: typeof Message | ((msg: Message) => boolean)) {
         const byType = type.prototype instanceof Message
             ? (msg: Message) => msg instanceof type
             : (msg: Message) => (type as (msg: Message) => boolean)(msg);
-        return (this.messages ?? []).filter(byType);
+        return (this.messages ?? []).filter(byType) as T[];
     }
-    findPacket(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
+    findPacket<T extends Message>(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
         const byType = type.prototype instanceof NetMessage
             ? (packet: NetMessage) => packet instanceof type
             : (packet: NetMessage) => (type as (msg: NetMessage) => boolean)(packet);
 
         for (const msg of this.messages ?? []) {
             if (msg instanceof Packet) {
-                const packet = (msg.packets ?? []).find(byType);
+                const packet = (msg.packets ?? []).find(byType) as T | undefined;
                 if (packet) {
                     return packet;
                 }
             }
         }
     }
-    findPackets(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
+    findPackets<T extends Message>(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
         const isType = type.prototype instanceof NetMessage
             ? (packet: NetMessage) => packet instanceof type
             : (packet: NetMessage) => (type as (msg: NetMessage) => boolean)(packet);
 
-        const packets = [];
+        const packets: T[] = [];
         for (const msg of this.messages ?? []) {
             if (msg instanceof Packet) {
                 for (const packet of msg.packets ?? []) {
                     if (isType(packet)) {
-                        packets.push(packet);
+                        packets.push(packet as T);
                     }
                 }
             }
@@ -251,10 +251,10 @@ export class SourceDemo {
 
             if (!synced) {
                 message.tick = 0;
-            } else if (message.tick < 0) {
+            } else if (message.tick! < 0) {
                 message.tick = last;
             }
-            last = message.tick;
+            last = message.tick!;
         }
 
         return this;
@@ -266,7 +266,11 @@ export class SourceDemo {
 
         if (endTick < 1) {
             const packets = this.findMessages(Packet);
-            endTick = packets[packets.length - 1].tick;
+            const lastPacket = packets[packets.length - 1];
+            if (!lastPacket) {
+                throw new Error('Cannot adjust range without parsed packets.');
+            }
+            endTick = lastPacket.tick!;
         }
 
         const delta = endTick - startTick;
@@ -294,13 +298,13 @@ export class SourceDemo {
 
             if (!synced) {
                 message.tick = 0;
-            } else if (message.tick < 0) {
+            } else if (message.tick! < 0) {
                 message.tick = last;
             } else {
-                message.tick -= tick;
+                message.tick! -= tick;
             }
 
-            last = message.tick;
+            last = message.tick!;
         }
 
         return this;
@@ -329,7 +333,7 @@ export class SourceDemo {
                     syncedTicks.push({
                         source: message.tick,
                         destination: result.tick,
-                        delta: Math.abs((message.tick ?? 0) - result.tick),
+                        delta: Math.abs((message.tick ?? 0) - result.tick!),
                         x: message.cmdInfo?.at(splitScreenIndex)?.viewOrigin?.x,
                         y: message.cmdInfo?.at(splitScreenIndex)?.viewOrigin?.y,
                         z: message.cmdInfo?.at(splitScreenIndex)?.viewOrigin?.z,

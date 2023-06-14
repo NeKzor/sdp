@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: MIT
  */
 
-import { assertEquals } from 'https://deno.land/std@0.191.0/testing/asserts.ts';
+import { assert, assertEquals } from 'https://deno.land/std@0.191.0/testing/asserts.ts';
 import { describe, it } from 'https://deno.land/std@0.191.0/testing/bdd.ts';
 import { DemoMessages, SourceDemoParser, SourceTimer } from '../src/mod.ts';
+import { DataTable, Packet, StringTable, UserCmd } from '../src/messages.ts';
 
 describe('SourceDemoParser', () => {
     describe('#Portal', () => {
@@ -84,7 +85,11 @@ describe('readUserCmds', () => {
                 .setOptions({ userCmds: true })
                 .parse(buffer);
 
-            const { userCmd } = demo.findMessage(DemoMessages.UserCmd);
+            const message = demo.findMessage<UserCmd>(DemoMessages.UserCmd);
+
+            assert(message?.userCmd);
+
+            const { userCmd } = message;
 
             assertEquals(userCmd.commandNumber, 3299);
             assertEquals(userCmd.tickCount, 100);
@@ -110,7 +115,11 @@ describe('readUserCmds', () => {
                 .setOptions({ userCmds: true })
                 .parse(buffer);
 
-            const { userCmd } = demo.findMessage(DemoMessages.UserCmd);
+            const message = demo.findMessage<UserCmd>(DemoMessages.UserCmd);
+
+            assert(message?.userCmd);
+
+            const { userCmd } = message;
 
             assertEquals(userCmd.commandNumber, 16);
             assertEquals(userCmd.tickCount, 4262);
@@ -138,7 +147,11 @@ describe('readStringTables', () => {
                 .setOptions({ stringTables: true })
                 .parse(buffer);
 
-            const { stringTables } = demo.findMessage(DemoMessages.StringTable);
+            const message = demo.findMessage<StringTable>(DemoMessages.StringTable);
+
+            assert(message?.stringTables);
+
+            const { stringTables } = message;
 
             assertEquals(stringTables.length, 18);
         });
@@ -151,9 +164,13 @@ describe('readStringTables', () => {
                 .setOptions({ stringTables: true })
                 .parse(buffer);
 
-            const { stringTables } = demo.findMessage(DemoMessages.StringTable);
+            const message = demo.findMessage<StringTable>(DemoMessages.StringTable);
 
-            assertEquals(stringTables.length, 16);
+            assert(message?.stringTables);
+
+            const { stringTables } = message;
+
+            assertEquals(stringTables?.length, 16);
         });
     });
 });
@@ -167,7 +184,11 @@ describe('readDataTables', () => {
                 .setOptions({ dataTables: true })
                 .parse(buffer);
 
-            const { dataTable } = demo.findMessage(DemoMessages.DataTable);
+            const message = demo.findMessage<DataTable>(DemoMessages.DataTable);
+
+            assert(message?.dataTable);
+
+            const { dataTable } = message;
 
             assertEquals(dataTable.tables.length, 307);
             assertEquals(dataTable.serverClasses.length, 236);
@@ -181,7 +202,11 @@ describe('readDataTables', () => {
                 .setOptions({ dataTables: true })
                 .parse(buffer);
 
-            const { dataTable } = demo.findMessage(DemoMessages.DataTable);
+            const message = demo.findMessage<DataTable>(DemoMessages.DataTable);
+
+            assert(message?.dataTable);
+
+            const { dataTable } = message;
 
             assertEquals(dataTable.tables.length, 269);
             assertEquals(dataTable.serverClasses.length, 222);
@@ -197,7 +222,11 @@ describe('readPackets', function () {
                 .setOptions({ packets: true })
                 .parse(buffer);
 
-            const { packets } = demo.findMessage(DemoMessages.Packet);
+            const message = demo.findMessage<Packet>(DemoMessages.Packet);
+
+            assert(message?.packets);
+
+            const { packets } = message;
 
             assertEquals(packets.length, 22);
         });
@@ -210,7 +239,11 @@ describe('readPackets', function () {
                 .setOptions({ packets: true })
                 .parse(buffer);
 
-            const { packets } = demo.findMessage(DemoMessages.Packet);
+            const message = demo.findMessage<Packet>(DemoMessages.Packet);
+
+            assert(message?.packets);
+
+            const { packets } = message;
 
             assertEquals(packets.length, 19);
         });

@@ -116,24 +116,31 @@ export class SourceTimer {
         let oldPosition = new Vector(0, 0, 0);
         let oldCommands: string[] = [];
 
-        demo.findMessages(Packet).forEach(({ tick, cmdInfo }) => {
+        demo.findMessages<Packet>(Packet).forEach(({ tick, cmdInfo }) => {
             if (tick !== 0 && !gameInfo.get(tick)) {
+                const info = cmdInfo![this.splitScreenIndex];
+                if (!info) {
+                    throw new Error(
+                        `Out of bounds access of CmdInfo with split screen index "${this.splitScreenIndex}".`,
+                    );
+                }
+
                 gameInfo.set(tick, {
                     position: {
                         previous: oldPosition,
-                        current: (oldPosition = cmdInfo[this.splitScreenIndex].viewOrigin),
+                        current: (oldPosition = info.viewOrigin!),
                     },
                 });
             }
         });
 
-        demo.findMessages(ConsoleCmd).forEach(({ tick, command }) => {
+        demo.findMessages<ConsoleCmd>(ConsoleCmd).forEach(({ tick, command }) => {
             // Ignore button inputs since they aren't really useful
-            if (tick === 0 || command.startsWith('+') || command.startsWith('-')) {
+            if (tick === 0 || command!.startsWith('+') || command!.startsWith('-')) {
                 return;
             }
 
-            const newCommands = [command];
+            const newCommands = [command!];
             const value = gameInfo.get(tick);
 
             if (value) {

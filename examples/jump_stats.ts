@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+import { ConsoleCmd, UserCmd } from '../src/messages.ts';
 import { DemoMessages, SourceDemoParser } from '../src/mod.ts';
 
 const file = Deno.args.at(0);
@@ -20,24 +21,24 @@ const demo = SourceDemoParser.default()
     .parse(Deno.readFileSync(file));
 
 const registeredJumps = demo
-    .findMessages(DemoMessages.UserCmd)
-    .filter(({ userCmd: { buttons } }) => buttons & IN_JUMP);
+    .findMessages<UserCmd>(DemoMessages.UserCmd)
+    .filter(({ userCmd }) => userCmd!.buttons! & IN_JUMP);
 
 const actualJumpInputs = demo
-    .findMessages(DemoMessages.ConsoleCmd)
-    .filter(({ command }) => command.startsWith('+jump'));
+    .findMessages<ConsoleCmd>(DemoMessages.ConsoleCmd)
+    .filter(({ command }) => command!.startsWith('+jump'));
 
 let prevTick = 0;
 let mouseJumps = 0;
 let keyboardJumps = 0;
 
 actualJumpInputs.forEach(({ tick, command }) => {
-    const mouse = command.endsWith('112') || command.endsWith('113');
+    const mouse = command!.endsWith('112') || command!.endsWith('113');
     if (tick !== prevTick) {
         console.log('-----------------');
     }
     console.log(
-        `${tick} ${command.split(' ')[0]} (${mouse ? 'mouse' : 'keyboard'})`,
+        `${tick} ${command!.split(' ')[0]} (${mouse ? 'mouse' : 'keyboard'})`,
     );
 
     if (mouse) {
@@ -45,7 +46,7 @@ actualJumpInputs.forEach(({ tick, command }) => {
     } else {
         ++keyboardJumps;
     }
-    prevTick = tick;
+    prevTick = tick!;
 });
 
 console.log('---- results ----');

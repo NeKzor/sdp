@@ -1,13 +1,16 @@
 [![Deno CI](https://github.com/NeKzor/sdp/actions/workflows/deno.yml/badge.svg)](https://github.com/NeKzor/sdp/actions/workflows/deno.yml)
 [![Release CD](https://github.com/NeKzor/sdp/actions/workflows/release.yml/badge.svg)](https://github.com/NeKzor/sdp/actions/workflows/release.yml)
+![npm](https://img.shields.io/npm/v/@nekz/sdp?color=blue)
 
 # sdp
 
-Simple Source Engine demo parser.
+Simple Source Engine demo parser. Try it out on [StackBlitz]!
+
+[StackBlitz]: (https://stackblitz.com/edit/sdp-playground?file=main.mjs)
 
 ## Features
 
-- Supports for multiple engines
+- Support for multiple engines
   - Portal 2
   - Half-Life 2
 - Optional decoding of message data
@@ -29,10 +32,12 @@ Simple Source Engine demo parser.
 
 ## Examples
 
-### Header Only
+### Read header only
+
+Using Deno + TypeScript:
 
 ```ts
-import { SourceDemoParser } from '@nekz/sdp/mod.ts';
+import { SourceDemoParser } from 'npm:@nekz/sdp';
 
 const demo = SourceDemoParser.default()
     .setOptions({ messages: false })
@@ -57,23 +62,23 @@ console.log(demo);
 */
 ```
 
-### Jump Stats
+### Read UserCmd messages
 
-```ts
-import { DemoMessages, SourceDemoParser } from '@nekz/sdp/mod.ts';
-import { UserCmd } from '@nekz/sdp/messages.ts';
+Using Node + JavaScript:
+
+```mjs
+import fs from 'node:fs';
+import { DemoMessages, SourceDemoParser } from '@nekz/sdp';
 
 const demo = SourceDemoParser.default()
     .setOptions({ userCmds: true })
-    .parse(Deno.readFileSync('demo.dem'));
+    .parse(fs.readFileSync('demo.dem'));
 
 const IN_JUMP = 1 << 1;
 
 const registeredJumps = demo
-    .findMessages<UserCmd>(DemoMessages.UserCmd)
-    .filter(({ userCmd }) => {
-        return userCmd!.buttons! & IN_JUMP;
-    });
+    .findMessages(DemoMessages.UserCmd)
+    .filter(({ userCmd }) => userCmd.buttons & IN_JUMP);
 
 console.log('registered jumps:', registeredJumps.length);
 
@@ -81,6 +86,10 @@ console.log('registered jumps:', registeredJumps.length);
     registered jumps: 270
 */
 ```
+
+### Jump Stats
+
+The [examples directory](./examples/) contains more examples for Node and Deno.
 
 ### View Origin
 

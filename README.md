@@ -6,7 +6,7 @@
 
 Simple Source Engine demo parser. Try it out on [StackBlitz]!
 
-[StackBlitz]: (https://stackblitz.com/edit/sdp-playground?file=main.mjs)
+[StackBlitz]: https://stackblitz.com/edit/sdp-playground?file=main.mjs
 
 ## Features
 

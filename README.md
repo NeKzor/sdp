@@ -1,6 +1,6 @@
 [![Deno CI](https://github.com/NeKzor/sdp/actions/workflows/deno.yml/badge.svg)](https://github.com/NeKzor/sdp/actions/workflows/deno.yml)
 [![Release CD](https://github.com/NeKzor/sdp/actions/workflows/release.yml/badge.svg)](https://github.com/NeKzor/sdp/actions/workflows/release.yml)
-![npm](https://img.shields.io/npm/v/@nekz/sdp?color=blue)
+[![npm](https://img.shields.io/npm/v/@nekz/sdp?color=blue)](https://www.npmjs.com/package/@nekz/sdp)
 
 # sdp
 

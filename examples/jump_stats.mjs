@@ -1,38 +1,38 @@
-import { DemoMessages, SourceDemoParser } from 'npm:@nekz/sdp';
-import { ConsoleCmd, UserCmd } from 'npm:@nekz/sdp/messages';
+import fs from 'node:fs';
+import { DemoMessages, SourceDemoParser  } from '@nekz/sdp';
 
-const file = Deno.args.at(0);
+const file = process.argv.at(2);
 
 if (!file) {
     console.error('demo path argument not specified!');
-    Deno.exit(1);
+    process.exit(1);
 }
 
 const demo = SourceDemoParser.default()
     .setOptions({ userCmds: true })
-    .parse(Deno.readFileSync(file));
+    .parse(fs.readFileSync(file));
 
 const IN_JUMP = 1 << 1;
 
 const registeredJumps = demo
-    .findMessages<UserCmd>(DemoMessages.UserCmd)
-    .filter(({ userCmd }) => userCmd!.buttons! & IN_JUMP);
+    .findMessages(DemoMessages.UserCmd)
+    .filter(({ userCmd }) => userCmd.buttons & IN_JUMP);
 
 const actualJumpInputs = demo
-    .findMessages<ConsoleCmd>(DemoMessages.ConsoleCmd)
-    .filter(({ command }) => command!.startsWith('+jump'));
+    .findMessages(DemoMessages.ConsoleCmd)
+    .filter(({ command }) => command.startsWith('+jump'));
 
 let prevTick = 0;
 let mouseJumps = 0;
 let keyboardJumps = 0;
 
 actualJumpInputs.forEach(({ tick, command }) => {
-    const mouse = command!.endsWith('112') || command!.endsWith('113');
+    const mouse = command.endsWith('112') || command.endsWith('113');
     if (tick !== prevTick) {
         console.log('-----------------');
     }
     console.log(
-        `${tick} ${command!.split(' ')[0]} (${mouse ? 'mouse' : 'keyboard'})`,
+        `${tick} ${command.split(' ')[0]} (${mouse ? 'mouse' : 'keyboard'})`,
     );
 
     if (mouse) {
@@ -40,7 +40,7 @@ actualJumpInputs.forEach(({ tick, command }) => {
     } else {
         ++keyboardJumps;
     }
-    prevTick = tick!;
+    prevTick = tick;
 });
 
 console.log('---- results ----');

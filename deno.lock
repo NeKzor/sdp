@@ -196,9 +196,14 @@
   },
   "npm": {
     "specifiers": {
+      "@nekz/sdp": "@nekz/sdp@0.1.0",
       "@types/node": "@types/node@18.11.18"
     },
     "packages": {
+      "@nekz/sdp@0.1.0": {
+        "integrity": "sha512-nuLsz423e/vXT1ouaiKBPd48ENxnCMKt/vhLfXHrQUgfB8ajCfplQABirrRnFX8Uavs1hLTpSisim5Elooizaw==",
+        "dependencies": {}
+      },
       "@types/node@18.11.18": {
         "integrity": "sha512-DHQpWGjyQKSHj3ebjFI/wRKcqQcdR+MoFBygntYOZytCqNfkd2ZC4ARDJ2DQqhjH5p85Nnd3jhUJIXrszFX/JA==",
         "dependencies": {}

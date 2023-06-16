@@ -95,6 +95,8 @@ The [examples directory](./examples/) contains more examples for Node and Deno.
 
 [![showcase.gif](showcase.gif)](https://nekz.me/parser)
 
+Used in [nekz.me/parser](https://nekz.me/parser). Updated example can be found in [examples/parser.html](./examples/parser.html).
+
 ## Credits
 
 [inolen/bit-buffer] for `BitStream` and `BitView`. I ported it to TypeScript because Deno cannot bundle npm specifiers

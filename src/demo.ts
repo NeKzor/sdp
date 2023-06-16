@@ -47,7 +47,7 @@ export class SourceDemo {
             : (msg: Message) => (type as (msg: Message) => boolean)(msg);
         return (this.messages ?? []).filter(byType) as T[];
     }
-    findPacket<T extends Message>(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
+    findPacket<T extends NetMessage>(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
         const byType = type.prototype instanceof NetMessage
             ? (packet: NetMessage) => packet instanceof type
             : (packet: NetMessage) => (type as (msg: NetMessage) => boolean)(packet);
@@ -61,7 +61,7 @@ export class SourceDemo {
             }
         }
     }
-    findPackets<T extends Message>(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
+    findPackets<T extends NetMessage>(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
         const isType = type.prototype instanceof NetMessage
             ? (packet: NetMessage) => packet instanceof type
             : (packet: NetMessage) => (type as (msg: NetMessage) => boolean)(packet);

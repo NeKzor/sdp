@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { DemoMessages, SourceDemoParser  } from '@nekz/sdp';
+import { DemoMessages, SourceDemoParser } from '@nekz/sdp';
 
 const file = process.argv.at(2);
 

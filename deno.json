@@ -22,9 +22,7 @@
         ]
     },
     "lint": {
-        "files": {
-          "include": ["src/"],
-          "exclude": ["npm/"]
-        }
+        "include": ["src/"],
+        "exclude": ["npm/"]
     }
 }

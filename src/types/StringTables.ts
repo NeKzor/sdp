@@ -44,21 +44,57 @@ export class StringTable {
             }
         }
     }
+    write(buf: SourceDemoBuffer, demo: SourceDemo) {
+        buf.writeASCIIString(this.name!);
+
+        buf.writeInt16(this.entries!.length!);
+        this.entries!.forEach((entry) => {
+            buf.writeASCIIString(entry.name!);
+
+            buf.writeBoolean(entry.data !== undefined);
+            if (entry.data !== undefined) {
+                entry.write(buf, demo);
+            }
+        });
+
+        buf.writeBoolean(this.classes!.length !== 0);
+        if (this.classes!.length !== 0) {
+            buf.writeInt16(this.classes!.length!);
+            this.classes!.forEach((entry) => {
+                buf.writeASCIIString(entry.name!);
+
+                buf.writeBoolean(entry.data !== undefined);
+                if (entry.data !== undefined) {
+                    entry.write(buf);
+                }
+            });
+        }
+    }
 }
 
 export class StringTableEntry {
     name: string;
+    length?: number;
     data?: StringTableEntries | Uint8Array;
     constructor(name: string) {
         this.name = name;
     }
     read(buf: SourceDemoBuffer, type: StringTableEntryType | undefined, demo: SourceDemo) {
-        const length = buf.readInt16();
+        this.length = buf.readInt16();
         if (type) {
             this.data = new type();
-            this.data.read(buf.readBitStream(length * 8), demo);
+            this.data.read(buf.readBitStream(this.length * 8), demo);
         } else {
-            this.data = buf.readArrayBuffer(length);
+            this.data = buf.readArrayBuffer(this.length);
+        }
+    }
+    write(buf: SourceDemoBuffer, demo: SourceDemo) {
+        if (this.data instanceof Uint8Array) {
+            buf.writeInt16(this.data.byteLength!)
+            buf.writeArrayBuffer(this.data, this.data.byteLength);
+        } else {
+            buf.writeInt16(this.length!)
+            this.data!.write(buf, demo);
         }
     }
 }
@@ -72,6 +108,10 @@ export class StringTableClass {
     read(buf: SourceDemoBuffer) {
         const length = buf.readInt16();
         this.data = buf.readASCIIString(length);
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt16(this.data!.length!);
+        buf.writeASCIIString(this.data!);
     }
 }
 
@@ -107,6 +147,24 @@ export class PlayerInfo {
             buf.readInt32(),
         ];
         this.filesDownloaded = buf.readInt32();
+    }
+    write(buf: SourceDemoBuffer, demo: SourceDemo) {
+        if (demo.isNewEngine()) {
+            buf.writeInt32(this.version!);
+            buf.writeInt32(this.xuid!);
+        }
+        buf.writeASCIIString(this.name!,32);
+        buf.writeInt32(this.userId!);
+        buf.writeASCIIString(this.guid!,32);
+        buf.writeInt32(this.friendsId!);
+        buf.writeASCIIString(this.friendsName!,32);
+        buf.writeBoolean(this.fakePlayer!);
+        buf.writeBoolean(this.isHltv!);
+        buf.writeInt32(this.customFiles!.at(0)!),
+        buf.writeInt32(this.customFiles!.at(1)!),
+        buf.writeInt32(this.customFiles!.at(2)!),
+        buf.writeInt32(this.customFiles!.at(3)!),
+        buf.writeInt32(this.filesDownloaded!);
     }
 }
 

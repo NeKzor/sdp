@@ -39,4 +39,38 @@ export class UserCmd {
         if (buf.readBoolean()) this.mouseDx = buf.readInt16();
         if (buf.readBoolean()) this.mouseDy = buf.readInt16();
     }
+    write(buf: SourceDemoBuffer) {
+        buf.writeBoolean(this.commandNumber !== undefined);
+        if (this.commandNumber !== undefined) buf.writeInt32(this.commandNumber);
+        buf.writeBoolean(this.tickCount !== undefined);
+        if (this.tickCount !== undefined) buf.writeInt32(this.tickCount);
+        buf.writeBoolean(this.viewAngleX !== undefined);
+        if (this.viewAngleX !== undefined) buf.writeFloat32(this.viewAngleX);
+        buf.writeBoolean(this.viewAngleY !== undefined);
+        if (this.viewAngleY !== undefined) buf.writeFloat32(this.viewAngleY);
+        buf.writeBoolean(this.viewAngleZ !== undefined);
+        if (this.viewAngleZ !== undefined) buf.writeFloat32(this.viewAngleZ);
+        buf.writeBoolean(this.forwardMove !== undefined);
+        if (this.forwardMove !== undefined) buf.writeFloat32(this.forwardMove);
+        buf.writeBoolean(this.sideMove !== undefined);
+        if (this.sideMove !== undefined) buf.writeFloat32(this.sideMove);
+        buf.writeBoolean(this.upMove !== undefined);
+        if (this.upMove !== undefined) buf.writeFloat32(this.upMove);
+        buf.writeBoolean(this.buttons !== undefined);
+        if (this.buttons !== undefined) buf.writeInt32(this.buttons);
+        buf.writeBoolean(this.impulse !== undefined);
+        if (this.impulse !== undefined) buf.writeInt8(this.impulse);
+        buf.writeBoolean(this.weaponSelect !== undefined);
+        if (this.weaponSelect !== undefined) {
+            buf.writeBits(this.weaponSelect, 11);
+            buf.writeBoolean(this.weaponSubtype !== undefined);
+            if (this.weaponSubtype !== undefined) {
+                buf.writeBits(this.weaponSubtype, 6);
+            }
+        }
+        buf.writeBoolean(this.mouseDx !== undefined);
+        if (this.mouseDx !== undefined) buf.writeInt16(this.mouseDx);
+        buf.writeBoolean(this.mouseDy !== undefined);
+        if (this.mouseDy !== undefined) buf.writeInt16(this.mouseDy);
+    }
 }

@@ -96,6 +96,20 @@ export class SourceDemo {
         this.messages = [];
         return this;
     }
+    writeHeader(buf: SourceDemoBuffer) {
+        buf.writeASCIIString(this.demoFileStamp!);
+        buf.writeInt32(this.demoProtocol!);
+        buf.writeInt32(this.networkProtocol!);
+        buf.writeASCIIString(this.serverName!, 260);
+        buf.writeASCIIString(this.clientName!, 260);
+        buf.writeASCIIString(this.mapName!, 260);
+        buf.writeASCIIString(this.gameDirectory!, 260);
+        buf.writeFloat32(this.playbackTime!);
+        buf.writeInt32(this.playbackTicks!);
+        buf.writeInt32(this.playbackFrames!);
+        buf.writeInt32(this.signOnLength!);
+        return this;
+    }
     readMessages(buf: SourceDemoBuffer) {
         if (!this.messages) {
             this.messages = [];
@@ -122,12 +136,33 @@ export class SourceDemo {
 
         return this;
     }
+    writeMessages(buf: SourceDemoBuffer) {
+        (this.messages ?? []).forEach((message, index) => {
+            buf.writeInt8(message.type);
+            buf.writeInt32(message.tick!);
+
+            if (message.slot !== undefined) {
+                buf.writeInt8(message.slot!);
+            }
+
+            message.write(buf, this);
+        });
+    }
     readUserCmds() {
         for (const message of this.messages ?? []) {
             if (message instanceof DemoMessages.UserCmd) {
                 const cmd = new UserCmd();
                 cmd.read(message.data!);
                 message.userCmd = cmd;
+            }
+        }
+
+        return this;
+    }
+    writeUserCmds() {
+        for (const message of this.messages ?? []) {
+            if (message instanceof DemoMessages.UserCmd && message.userCmd) {
+                message.userCmd.write(message.data!);
             }
         }
 
@@ -146,6 +181,20 @@ export class SourceDemo {
                 }
 
                 message.stringTables = stringTables;
+            }
+        }
+
+        return this;
+    }
+    writeStringTables() {
+        for (const message of this.messages ?? []) {
+            if (message instanceof DemoMessages.StringTable && message.stringTables) {
+                message.data = new SourceDemoBuffer(new ArrayBuffer(0));
+                message.data!.writeInt8(message.stringTables.length);
+
+                message.stringTables.forEach((stringTable) => {
+                    stringTable.write(message.data!, this);
+                });
             }
         }
 
@@ -181,6 +230,26 @@ export class SourceDemo {
 
         return this;
     }
+    writeDataTables() {
+        for (const message of this.messages ?? []) {
+            if (message instanceof DataTable && message.dataTable) {
+                message.data = new SourceDemoBuffer(new ArrayBuffer(0));
+
+                message.dataTable.tables.forEach((dt) => {
+                    message.data!.writeBoolean(true);
+                    dt.write(message.data!, this);
+                });
+                message.data.writeBoolean(false);
+
+                message.data.writeInt16(message.dataTable.serverClasses.length);
+                message.dataTable.serverClasses!.forEach((sc) => {
+                    sc.write(message.data!);
+                });
+            }
+        }
+
+        return this;
+    }
     readPackets(netMessages?: (typeof NetMessage | undefined)[]) {
         netMessages = netMessages ??
             (this.isNewEngine() ? NetMessages.Portal2Engine : NetMessages.HalfLife2Engine);
@@ -202,6 +271,20 @@ export class SourceDemo {
                 }
 
                 message.packets = packets;
+            }
+        }
+
+        return this;
+    }
+    writePackets() {
+        for (const message of this.messages ?? []) {
+            if (message instanceof Packet && message.packets) {
+                message.data = new SourceDemoBuffer(new ArrayBuffer(0));
+
+                message.packets.forEach((packet, index) => {
+                    message.data!.writeBits(packet.type, 6);
+                    packet.write(message.data!, this);
+                });
             }
         }
 

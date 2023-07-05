@@ -27,4 +27,15 @@ export class CmdInfo {
 
         return this;
     }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt32(this.flags!);
+        buf.writeVector(this.viewOrigin!);
+        buf.writeQAngle(this.viewAngles!);
+        buf.writeQAngle(this.localViewAngles!);
+        buf.writeVector(this.viewOrigin2!);
+        buf.writeQAngle(this.viewAngles2!);
+        buf.writeQAngle(this.localViewAngles2!);
+
+        return this;
+    }
 }

@@ -45,6 +45,9 @@ export class Message {
     read(_buf: SourceDemoBuffer, _demo: SourceDemo): Message {
         throw new Error(`read() for ${this.constructor.name} not implemented!`);
     }
+    write(_buf: SourceDemoBuffer, _demo: SourceDemo): Message {
+        throw new Error(`write() for ${this.constructor.name} not implemented!`);
+    }
 }
 
 export class Packet extends Message {
@@ -85,6 +88,14 @@ export class Packet extends Message {
         this.data = buf.readBitStream(buf.readInt32() * 8);
         return this;
     }
+    write(buf: SourceDemoBuffer) {
+        this.cmdInfo!.forEach((cmd) => cmd.write(buf));
+        buf.writeInt32(this.inSequence!);
+        buf.writeInt32(this.outSequence!);
+        buf.writeInt32(this.data!.length / 8);
+        buf.writeBitStream(this.data!, this.data!.length);
+        return this;
+    }
     *[Symbol.iterator]() {
         for (const packet of this.packets ?? []) {
             yield packet;
@@ -96,11 +107,19 @@ export class SyncTick extends Message {
     read() {
         return this;
     }
+    write() {
+        return this;
+    }
 }
 export class ConsoleCmd extends Message {
     command?: string;
     read(buf: SourceDemoBuffer) {
         this.command = buf.readASCIIString(buf.readInt32());
+        return this;
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt32(this.command!.length + 1);
+        buf.writeASCIIString(this.command!, this.command!.length + 1);
         return this;
     }
 }
@@ -111,6 +130,12 @@ export class UserCmd extends Message {
     read(buf: SourceDemoBuffer) {
         this.cmd = buf.readInt32();
         this.data = buf.readBitStream(buf.readInt32() * 8);
+        return this;
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt32(this.cmd!);
+        buf.writeInt32(this.data!.length / 8);
+        buf.writeBitStream(this.data!, this.data!.length);
         return this;
     }
 }
@@ -124,11 +149,20 @@ export class DataTable extends Message {
         this.data = buf.readBitStream(buf.readInt32() * 8);
         return this;
     }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt32(this.data!.length / 8);
+        buf.writeBitStream(this.data!, this.data!.length);
+        return this;
+    }
 }
 export class Stop extends Message {
     restData?: SourceDemoBuffer;
     read(buf: SourceDemoBuffer) {
         this.restData = buf.readBitStream(buf.bitsLeft);
+        return this;
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeBitStream(this.restData!);
         return this;
     }
 }
@@ -140,12 +174,23 @@ export class CustomData extends Message {
         this.data = buf.readBitStream(buf.readInt32() * 8);
         return this;
     }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt32(this.unk!);
+        buf.writeInt32(this.data!.length / 8);
+        buf.writeBitStream(this.data!, this.data!.length / 8);
+        return this;
+    }
 }
 export class StringTable extends Message {
     data?: SourceDemoBuffer;
     stringTables?: StringTableType[];
     read(buf: SourceDemoBuffer) {
         this.data = buf.readBitStream(buf.readInt32() * 8);
+        return this;
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt32(this.data!.length / 8);
+        buf.writeBitStream(this.data!, this.data!.length);
         return this;
     }
 }

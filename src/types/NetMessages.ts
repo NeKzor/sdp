@@ -24,15 +24,22 @@ export class NetMessage {
     read(_buf: SourceDemoBuffer, _demo: SourceDemo) {
         throw new Error(`read() for ${this.constructor.name} not implemented!`);
     }
+    write(_buf: SourceDemoBuffer, _demo: SourceDemo) {
+        throw new Error(`write() for ${this.constructor.name} not implemented!`);
+    }
 }
 
 export class NetNop extends NetMessage {
     read() {}
+    write() {}
 }
 export class NetDisconnect extends NetMessage {
     text?: string;
     read(buf: SourceDemoBuffer) {
         this.text = buf.readASCIIString();
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeASCIIString(this.text!);
     }
 }
 export class NetFile extends NetMessage {
@@ -44,11 +51,19 @@ export class NetFile extends NetMessage {
         this.fileName = buf.readASCIIString();
         this.fileRequested = buf.readBoolean();
     }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt32(this.transferId!);
+        buf.writeASCIIString(this.fileName!);
+        buf.writeBoolean(this.fileRequested!);
+    }
 }
 export class NetSplitScreenUser extends NetMessage {
     unk?: boolean;
     read(buf: SourceDemoBuffer) {
         this.unk = buf.readBoolean();
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeBoolean(this.unk!);
     }
 }
 export class NetTick extends NetMessage {
@@ -61,11 +76,20 @@ export class NetTick extends NetMessage {
         this.hostFrameTime = buf.readInt16() / NET_TICK_SCALEUP;
         this.hostFrameTimeStdDeviation = buf.readInt16() / NET_TICK_SCALEUP;
     }
+    write(buf: SourceDemoBuffer) {
+        const NET_TICK_SCALEUP = 100000;
+        buf.writeInt32(this.tick!);
+        buf.writeInt16(this.hostFrameTime! * NET_TICK_SCALEUP);
+        buf.writeInt16(this.hostFrameTimeStdDeviation! * NET_TICK_SCALEUP);
+    }
 }
 export class NetStringCmd extends NetMessage {
     command?: string;
     read(buf: SourceDemoBuffer) {
         this.command = buf.readASCIIString();
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeASCIIString(this.command!);
     }
 }
 export class NetSetConVar extends NetMessage {
@@ -79,6 +103,13 @@ export class NetSetConVar extends NetMessage {
                 value: buf.readASCIIString(),
             });
         }
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt8(this.convars!.length);
+        this.convars!.forEach(({ name, value }) => {
+            buf.writeASCIIString(name);
+            buf.writeASCIIString(value);
+        });
     }
 }
 export class NetSignonState extends NetMessage {
@@ -96,9 +127,24 @@ export class NetSignonState extends NetMessage {
             if (length > 0) {
                 this.playersNetworkIds = buf.readArrayBuffer(length);
             }
+            // TODO: Preserve length of string?
             length = buf.readInt32();
             if (length > 0) {
                 this.mapName = buf.readASCIIString(length);
+            }
+        }
+    }
+    write(buf: SourceDemoBuffer, demo: SourceDemo) {
+        buf.writeInt8(this.signonState!);
+        buf.writeInt32(this.spawnCount!);
+        if (demo.isNewEngine()) {
+            buf.writeInt32(this.playersNetworkIds?.byteLength ?? 0);
+            if (this.playersNetworkIds?.byteLength ?? 0) {
+                buf.writeArrayBuffer(this.playersNetworkIds!, this.playersNetworkIds!.byteLength);
+            }
+            buf.writeInt32(this.mapName !== undefined ? this.mapName.length + 1 : 0);
+            if (this.mapName !== undefined) {
+                buf.writeASCIIString(this.mapName);
             }
         }
     }
@@ -142,14 +188,42 @@ export class SvcServerInfo extends NetMessage {
         this.skyName = buf.readASCIIString();
         this.hostName = buf.readASCIIString();
     }
+    write(buf: SourceDemoBuffer, demo: SourceDemo) {
+        buf.writeInt16(this.protocol!);
+        buf.writeInt32(this.serverCount!);
+        buf.writeBoolean(this.isHltv!);
+        buf.writeBoolean(this.isDedicated!);
+        buf.writeInt32(this.clientCrc!);
+        buf.writeInt16(this.maxClasses!);
+        buf.writeInt32(this.mapCrc!);
+        buf.writeInt8(this.playerSlot!);
+        buf.writeInt8(this.maxClients!);
+        if (demo.isNewEngine()) {
+            buf.writeInt32(this.unk!);
+        } else if (demo.networkProtocol === 24) {
+            buf.writeBits(this.unk!, 96);
+        }
+        buf.writeFloat32(this.tickInterval!);
+        buf.writeInt8(this.cOs!.charCodeAt(0));
+        buf.writeASCIIString(this.gameDir!);
+        buf.writeASCIIString(this.mapName!);
+        buf.writeASCIIString(this.skyName!);
+        buf.writeASCIIString(this.hostName!);
+    }
 }
 export class SvcSendTable extends NetMessage {
     needsDecoder?: boolean;
+    propsLength?: number;
     props?: number;
     read(buf: SourceDemoBuffer) {
         this.needsDecoder = buf.readBoolean();
-        const length = buf.readInt16();
-        this.props = buf.readBits(length);
+        this.propsLength = buf.readInt16();
+        this.props = buf.readBits(this.propsLength);
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeBoolean(this.needsDecoder!);
+        buf.writeInt16(this.propsLength!);
+        buf.writeBits(this.props!, this.propsLength!);
     }
 }
 export class SvcClassInfo extends NetMessage {
@@ -173,11 +247,27 @@ export class SvcClassInfo extends NetMessage {
             }
         }
     }
+    write(buf: SourceDemoBuffer) {
+        let length = this.serverClasses!.length;
+        buf.writeInt16(length);
+        buf.writeBoolean(this.createOnClient!);
+        if (!this.createOnClient) {
+            this.serverClasses!.forEach(({ classId, className, dataTableName }) => {
+                --length;
+                buf.writeBits(classId, Math.log2(length) + 1);
+                buf.writeASCIIString(className);
+                buf.writeASCIIString(dataTableName);
+            });
+        }
+    }
 }
 export class SvcSetPause extends NetMessage {
     paused?: boolean;
     read(buf: SourceDemoBuffer) {
         this.paused = buf.readBoolean();
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeBoolean(this.paused!);
     }
 }
 export class SvcCreateStringTable extends NetMessage {
@@ -188,28 +278,48 @@ export class SvcCreateStringTable extends NetMessage {
     userDataSize?: number;
     userDataSizeBits?: number;
     flags?: number;
+    stringDataLength?: number;
     stringData?: number;
     read(buf: SourceDemoBuffer, demo: SourceDemo) {
         this.name = buf.readASCIIString();
         this.maxEntries = buf.readInt16();
         this.numEntries = buf.readBits(Math.log2(this.maxEntries) + 1);
-        const length = buf.readBits(20);
+        this.stringDataLength = buf.readBits(20);
         this.userDataFixedSize = buf.readBoolean();
         this.userDataSize = this.userDataFixedSize ? buf.readBits(12) : 0;
         this.userDataSizeBits = this.userDataFixedSize ? buf.readBits(4) : 0;
         this.flags = buf.readBits(demo.isNewEngine() ? 2 : 1);
-        this.stringData = buf.readBits(length);
+        this.stringData = buf.readBits(this.stringDataLength);
+    }
+    write(buf: SourceDemoBuffer, demo: SourceDemo) {
+        buf.writeASCIIString(this.name!);
+        buf.writeInt16(this.maxEntries!);
+        buf.writeBits(this.numEntries!, Math.log2(this.maxEntries!) + 1);
+        buf.writeBits(this.stringDataLength!, 20);
+        buf.writeBoolean(this.userDataFixedSize!);
+        this.userDataFixedSize && buf.writeBits(this.userDataSize!, 12);
+        this.userDataFixedSize && buf.writeBits(this.userDataSizeBits!, 4);
+        buf.writeBits(this.flags!, demo.isNewEngine() ? 2 : 1);
+        buf.writeBits(this.stringData!, this.stringDataLength!);
     }
 }
 export class SvcUpdateStringTable extends NetMessage {
     tableId?: number;
     numChangedEntries?: number;
+    stringDataLength?: number;
     stringData?: number;
     read(buf: SourceDemoBuffer) {
         this.tableId = buf.readBits(5);
         this.numChangedEntries = buf.readBoolean() ? buf.readInt16() : 1;
-        const length = buf.readBits(20);
-        this.stringData = buf.readBits(length);
+        this.stringDataLength = buf.readBits(20);
+        this.stringData = buf.readBits(this.stringDataLength);
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeBits(this.tableId!, 5);
+        buf.writeBoolean(this.numChangedEntries !== 1);
+        this.numChangedEntries !== 1 && buf.writeInt16(this.numChangedEntries!);
+        buf.writeBits(this.stringDataLength!, 20);
+        buf.writeBits(this.stringData!, this.stringDataLength!);
     }
 }
 export class SvcVoiceInit extends NetMessage {
@@ -221,16 +331,28 @@ export class SvcVoiceInit extends NetMessage {
         this.quality = buf.readInt8();
         if (this.quality === 255) this.unk = buf.readFloat32();
     }
+    write(buf: SourceDemoBuffer) {
+        buf.writeASCIIString(this.codec!);
+        buf.writeInt8(this.quality!);
+        if (this.quality === 255) buf.writeFloat32(this.unk!);
+    }
 }
 export class SvcVoiceData extends NetMessage {
     client?: number;
     proximity?: number;
+    voiceDataLength?: number;
     voiceData?: number;
     read(buf: SourceDemoBuffer) {
         this.client = buf.readInt8();
         this.proximity = buf.readInt8();
-        const length = buf.readInt16();
-        this.voiceData = buf.readBits(length);
+        this.voiceDataLength = buf.readInt16();
+        this.voiceData = buf.readBits(this.voiceDataLength);
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt8(this.client!);
+        buf.writeInt8(this.proximity!);
+        buf.writeInt16(this.voiceDataLength!);
+        buf.writeBits(this.voiceData!, this.voiceDataLength!);
     }
 }
 export class SvcPrint extends NetMessage {
@@ -238,9 +360,13 @@ export class SvcPrint extends NetMessage {
     read(buf: SourceDemoBuffer) {
         this.message = buf.readASCIIString();
     }
+    write(buf: SourceDemoBuffer) {
+        buf.writeASCIIString(this.message!);
+    }
 }
 export class SvcSounds extends NetMessage {
     reliableSound?: boolean;
+    soundsData?: SourceDemoBuffer;
     sounds?: SoundInfo[];
     read(buf: SourceDemoBuffer, demo: SourceDemo) {
         this.reliableSound = buf.readBoolean();
@@ -257,11 +383,27 @@ export class SvcSounds extends NetMessage {
             }
         }
     }
+    write(buf: SourceDemoBuffer, demo: SourceDemo) {
+        buf.writeBoolean(this.reliableSound!);
+        this.reliableSound === false && buf.writeBits(this.sounds!.length, 8);
+
+        if (demo.demoProtocol === 3) {
+            // TODO
+            //this.soundsData = new SourceDemoBuffer(new ArrayBuffer(0));
+            //this.sounds!.forEach((sound) => sound.write(this.soundsData!));
+        }
+
+        buf.writeBits(this.soundsData!.length, this.reliableSound ? 8 : 16);
+        buf.writeBitStream(this.soundsData!, this.soundsData!.length);
+    }
 }
 export class SvcSetView extends NetMessage {
     entityIndex?: number;
     read(buf: SourceDemoBuffer) {
         this.entityIndex = buf.readBits(11);
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeBits(this.entityIndex!, 11);
     }
 }
 export class SvcFixAngle extends NetMessage {
@@ -271,11 +413,18 @@ export class SvcFixAngle extends NetMessage {
         this.relative = buf.readBoolean();
         this.angle = [buf.readInt16(), buf.readInt16(), buf.readInt16()];
     }
+    write(buf: SourceDemoBuffer) {
+        buf.writeBoolean(this.relative!);
+        this.angle!.forEach((ang) => buf.writeInt16(ang));
+    }
 }
 export class SvcCrosshairAngle extends NetMessage {
     angle?: [number, number, number];
     read(buf: SourceDemoBuffer) {
         this.angle = [buf.readInt16(), buf.readInt16(), buf.readInt16()];
+    }
+    write(buf: SourceDemoBuffer) {
+        this.angle!.forEach((ang) => buf.writeInt16(ang));
     }
 }
 export class SvcBspDecal extends NetMessage {
@@ -293,33 +442,63 @@ export class SvcBspDecal extends NetMessage {
         }
         this.lowPriority = buf.readBoolean();
     }
+    write(buf: SourceDemoBuffer) {
+        buf.writeVectorCoord(this.pos!);
+        buf.writeBits(this.decalTextureIndex!, 9);
+        buf.writeBoolean(this.entityIndex !== undefined);
+        if (this.entityIndex !== undefined) {
+            buf.writeBits(this.entityIndex!, 11);
+            buf.writeBits(this.modelIndex!, 11);
+        }
+        buf.writeBoolean(this.lowPriority!);
+    }
 }
 export class SvcSplitScreen extends NetMessage {
     unk?: number;
+    dataLength?: number;
     data?: number;
     read(buf: SourceDemoBuffer) {
         this.unk = buf.readBits(1);
-        const length = buf.readBits(11);
-        this.data = buf.readBits(length);
+        this.dataLength = buf.readBits(11);
+        this.data = buf.readBits(this.dataLength);
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeBits(this.unk!, 1);
+        buf.writeBits(this.dataLength!, 11);
+        buf.writeBits(this.data!, this.dataLength!);
     }
 }
 export class SvcUserMessage extends NetMessage {
     msgType?: number;
+    msgDataLength?: number;
     msgData?: number;
     read(buf: SourceDemoBuffer, demo: SourceDemo) {
         this.msgType = buf.readInt8();
-        const length = buf.readBits(demo.isNewEngine() ? 12 : 11);
-        this.msgData = buf.readBits(length);
+        this.msgDataLength = buf.readBits(demo.isNewEngine() ? 12 : 11);
+        this.msgData = buf.readBits(this.msgDataLength);
+    }
+    write(buf: SourceDemoBuffer, demo: SourceDemo) {
+        buf.writeInt8(this.msgType!);
+        buf.writeBits(this.msgDataLength!, demo.isNewEngine() ? 12 : 11);
+        buf.writeBits(this.msgData!, this.msgDataLength!);
     }
 }
 export class SvcEntityMessage extends NetMessage {
     entityIndex?: number;
     classId?: number;
+    dataLength?: number;
+    data?: number;
     read(buf: SourceDemoBuffer) {
         this.entityIndex = buf.readBits(11);
         this.classId = buf.readBits(9);
-        const length = buf.readBits(11);
-        buf.readBits(length);
+        this.dataLength = buf.readBits(11);
+        this.data = buf.readBits(this.dataLength);
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeBits(this.entityIndex!, 11);
+        buf.writeBits(this.classId!, 9);
+        buf.writeBits(this.dataLength!, 11);
+        buf.writeBits(this.data!, this.dataLength!);
     }
 }
 export class SvcGameEvent extends NetMessage {
@@ -327,13 +506,21 @@ export class SvcGameEvent extends NetMessage {
     data?: SourceDemoBuffer;
     read(buf: SourceDemoBuffer, demo: SourceDemo) {
         const length = buf.readBits(11);
-        const data = buf.readBitStream(length);
+        this.data = buf.readBitStream(length);
 
         if (demo.gameEventManager) {
-            this.event = demo.gameEventManager.deserializeEvent(data);
-        } else {
-            this.data = data;
+            this.event = demo.gameEventManager.deserializeEvent(this.data);
         }
+    }
+    write(buf: SourceDemoBuffer, demo: SourceDemo) {
+        if (demo.gameEventManager) {
+            // TODO
+            //this.data = new SourceDemoBuffer(new ArrayBuffer(0));
+            //demo.gameEventManager.serializeEvent(this.event!, this.data);
+        }
+
+        buf.writeBits(this.data!.length, 11);
+        buf.writeBitStream(this.data!, this.data!.length);
     }
 }
 export class SvcPacketEntities extends NetMessage {
@@ -343,6 +530,7 @@ export class SvcPacketEntities extends NetMessage {
     baseLine?: boolean;
     updatedEntries?: number;
     updateBaseline?: boolean;
+    dataLength?: number;
     data?: number;
     read(buf: SourceDemoBuffer) {
         this.maxEntries = buf.readBits(11);
@@ -350,9 +538,19 @@ export class SvcPacketEntities extends NetMessage {
         this.deltaFrom = this.isDelta ? buf.readInt32() : 0;
         this.baseLine = buf.readBoolean();
         this.updatedEntries = buf.readBits(11);
-        const length = buf.readBits(20);
+        this.dataLength = buf.readBits(20);
         this.updateBaseline = buf.readBoolean();
-        this.data = buf.readBits(length);
+        this.data = buf.readBits(this.dataLength);
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeBits(this.maxEntries!, 11);
+        buf.writeBoolean(this.isDelta!);
+        this.isDelta && buf.writeInt32(this.deltaFrom!);
+        buf.writeBoolean(this.baseLine!);
+        buf.writeBits(this.updatedEntries!, 11);
+        buf.writeBits(this.dataLength!, 20);
+        buf.writeBoolean(this.updateBaseline!);
+        buf.writeBits(this.data!, this.dataLength!);
     }
 }
 export class SvcTempEntities extends NetMessage {
@@ -363,36 +561,61 @@ export class SvcTempEntities extends NetMessage {
         const length = buf.readBits(17);
         this.data = buf.readBitStream(length);
     }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt8(this.numEntries!);
+        buf.writeBits(this.data!.length, 17);
+        buf.writeBitStream(this.data!, this.data!.length);
+    }
 }
 export class SvcPrefetch extends NetMessage {
     soundIndex?: number;
     read(buf: SourceDemoBuffer) {
         this.soundIndex = buf.readBits(13);
     }
+    write(buf: SourceDemoBuffer) {
+        buf.writeBits(this.soundIndex!, 13);
+    }
 }
 export class SvcMenu extends NetMessage {
     menuType?: number;
+    dataLength?: number;
     data?: number;
     read(buf: SourceDemoBuffer) {
         this.menuType = buf.readInt16();
-        const length = buf.readInt32();
-        this.data = buf.readBits(length);
+        this.dataLength = buf.readInt32();
+        this.data = buf.readBits(this.dataLength);
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt16(this.menuType!);
+        buf.writeInt32(this.dataLength!);
+        buf.writeBits(this.data!, this.dataLength!);
     }
 }
 export class SvcGameEventList extends NetMessage {
+    data?: SourceDemoBuffer;
     read(buf: SourceDemoBuffer, demo: SourceDemo) {
         let events = buf.readBits(9);
         const length = buf.readBits(20);
-        const data = buf.readBitStream(length);
+        this.data = buf.readBitStream(length);
 
         const gameEvents = [];
         while (events--) {
             const descriptor = new GameEventDescriptor();
-            descriptor.read(data);
+            descriptor.read(this.data);
             gameEvents.push(descriptor);
         }
 
         demo.gameEventManager = new GameEventManager(gameEvents);
+    }
+    write(buf: SourceDemoBuffer, demo: SourceDemo) {
+        buf.writeBits(demo.gameEventManager!.gameEvents!.length, 9);
+
+        // TODO
+        //this.data = new SourceDemoBuffer(new ArrayBuffer(0));
+        //demo.gameEventManager!.gameEvents.forEach((descriptor) => descriptor.read(this.data!));
+
+        buf.writeBits(this.data!.length, 20);
+        buf.writeBitStream(this.data!, this.data!.length);
     }
 }
 export class SvcGetCvarValue extends NetMessage {
@@ -402,6 +625,10 @@ export class SvcGetCvarValue extends NetMessage {
         this.cookie = buf.readInt32();
         this.cvarName = buf.readASCIIString();
     }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt32(this.cookie!);
+        buf.writeASCIIString(this.cvarName!);
+    }
 }
 export class SvcCmdKeyValues extends NetMessage {
     buffer?: Uint8Array;
@@ -409,12 +636,20 @@ export class SvcCmdKeyValues extends NetMessage {
         const length = buf.readInt32();
         this.buffer = buf.readArrayBuffer(length);
     }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt32(this.buffer!.byteLength);
+        buf.writeArrayBuffer(this.buffer!, this.buffer!.byteLength);
+    }
 }
 export class SvcPaintMapData extends NetMessage {
     data?: SourceDemoBuffer;
     read(buf: SourceDemoBuffer) {
         const length = buf.readInt32();
         this.data = buf.readBitStream(length);
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt32(this.data!.length);
+        buf.writeBitStream(this.data!, this.data!.length);
     }
 }
 

@@ -85,13 +85,7 @@ export class BitView {
 
         if (bits > available) {
             throw new Error(
-                'Cannot get ' +
-                    bits +
-                    ' bit(s) from offset ' +
-                    offset +
-                    ', ' +
-                    available +
-                    ' available',
+                `Cannot get ${bits} bit(s) from offset ${offset}, ${available} available`,
             );
         }
 
@@ -144,13 +138,7 @@ export class BitView {
 
         if (bits > available) {
             throw new Error(
-                'Cannot set ' +
-                    bits +
-                    ' bit(s) from offset ' +
-                    offset +
-                    ', ' +
-                    available +
-                    ' available',
+                `Cannot set ${bits} bit(s) from offset ${offset}, ${available} available`,
             );
         }
 
@@ -253,7 +241,7 @@ export class BitView {
     }
     getArrayBuffer(offset: number, byteLength: number) {
         const buffer = new Uint8Array(byteLength);
-        for (let i = 0; i < byteLength; i++) {
+        for (let i = 0; i < byteLength; ++i) {
             buffer[i] = this.getUint8(offset + i * 8);
         }
         return buffer;
@@ -263,7 +251,7 @@ export class BitView {
 const stringToByteArray = (str: string) => {
     // https://gist.github.com/volodymyr-mykhailyk/2923227
     const b = [];
-    for (let i = 0; i < str.length; i++) {
+    for (let i = 0; i < str.length; ++i) {
         const unicode = str.charCodeAt(i);
         // 0x00000000 - 0x0000007f -> 0xxxxxxx
         if (unicode <= 0x7f) {
@@ -387,6 +375,8 @@ export class BitStream {
         ) => void,
     >(name: keyof BitView, size: number) {
         return (value: T) => {
+            if (this.byteIndex > 137614 && 0)
+                throw new Error();
             (this._view as unknown as Record<keyof BitView, F>)[name](
                 this._index,
                 value,
@@ -425,7 +415,7 @@ export class BitStream {
                 chars.push(c);
             }
 
-            i++;
+            ++i;
         }
 
         const string = String.fromCharCode.apply(null, chars);
@@ -476,10 +466,10 @@ export class BitStream {
     readUTF8String(bytes?: number) {
         return this.readString(bytes, true);
     }
-    writeASCIIString(string: string, bytes: number) {
+    writeASCIIString(string: string, bytes?: number) {
         const length = bytes || string.length + 1; // + 1 for NULL
 
-        for (let i = 0; i < length; i++) {
+        for (let i = 0; i < length; ++i) {
             this.writeUint8(i < string.length ? string.charCodeAt(i) : 0x00);
         }
     }
@@ -487,7 +477,7 @@ export class BitStream {
         const byteArray = stringToByteArray(string);
 
         const length = bytes || byteArray.length + 1; // + 1 for NULL
-        for (let i = 0; i < length; i++) {
+        for (let i = 0; i < length; ++i) {
             this.writeUint8(i < byteArray.length ? byteArray[i]! : 0x00);
         }
     }
@@ -499,7 +489,7 @@ export class BitStream {
         this._index += bitLength;
         return slice;
     }
-    writeBitStream(stream: BitStream, length: number) {
+    writeBitStream(stream: BitStream, length?: number) {
         if (!length) {
             length = stream.bitsLeft;
         }

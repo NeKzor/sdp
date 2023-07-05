@@ -57,6 +57,11 @@ export class SendTable {
             this.props.push(prop);
         }
     }
+    write(buf: SourceDemoBuffer, demo: SourceDemo) {
+        buf.writeBoolean(this.needsDecoder!);
+        buf.writeASCIIString(this.netTableName!);
+        this.props?.forEach((prop) => prop.write(buf, demo));
+    }
 }
 
 export class SendProp {
@@ -101,6 +106,38 @@ export class SendProp {
             throw new Error('Invalid prop type: ' + this.type);
         }
     }
+    write(buf: SourceDemoBuffer, demo: SourceDemo) {
+        const isPortal2 = demo.gameDirectory === 'portal2';
+
+        buf.writeBits(this.type!, 5);
+        buf.writeASCIIString(this.varName!);
+        buf.writeBits(this.flags!, demo.demoProtocol === 2 ? 11 : 16);
+
+        if (isPortal2) {
+            buf.writeBits(this.unk!, 11);
+        }
+
+        if (
+            this.type === SendPropType.SendTable ||
+            (this.flags! & SendPropFlags.Exclude) !== 0
+        ) {
+            buf.writeASCIIString(this.excludeDtName!);
+        } else if (
+            this.type === SendPropType.String ||
+            this.type === SendPropType.Int ||
+            this.type === SendPropType.Float ||
+            this.type === SendPropType.Vector ||
+            this.type === SendPropType.VectorXy
+        ) {
+            buf.writeFloat32(this.lowValue!);
+            buf.writeFloat32(this.highValue!);
+            buf.writeBits(this.numBits!, 7);
+        } else if (this.type === SendPropType.Array) {
+            buf.writeBits(this.elements!, 10);
+        } else {
+            throw new Error('Invalid prop type: ' + this.type);
+        }
+    }
 }
 
 export class ServerClassInfo {
@@ -111,5 +148,10 @@ export class ServerClassInfo {
         this.classId = buf.readInt16();
         this.className = buf.readASCIIString();
         this.dataTableName = buf.readASCIIString();
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeInt16(this.classId!);
+        buf.writeASCIIString(this.className!);
+        buf.writeASCIIString(this.dataTableName!);
     }
 }

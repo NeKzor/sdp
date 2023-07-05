@@ -375,8 +375,6 @@ export class BitStream {
         ) => void,
     >(name: keyof BitView, size: number) {
         return (value: T) => {
-            if (this.byteIndex > 137614 && 0)
-                throw new Error();
             (this._view as unknown as Record<keyof BitView, F>)[name](
                 this._index,
                 value,

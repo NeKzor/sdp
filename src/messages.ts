@@ -177,7 +177,7 @@ export class CustomData extends Message {
     write(buf: SourceDemoBuffer) {
         buf.writeInt32(this.unk!);
         buf.writeInt32(this.data!.length / 8);
-        buf.writeBitStream(this.data!, this.data!.length / 8);
+        buf.writeBitStream(this.data!, this.data!.length);
         return this;
     }
 }

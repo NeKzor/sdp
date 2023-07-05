@@ -137,7 +137,7 @@ export class SourceDemo {
         return this;
     }
     writeMessages(buf: SourceDemoBuffer) {
-        (this.messages ?? []).forEach((message, index) => {
+        (this.messages ?? []).forEach((message) => {
             buf.writeInt8(message.type);
             buf.writeInt32(message.tick!);
 
@@ -281,7 +281,7 @@ export class SourceDemo {
             if (message instanceof Packet && message.packets) {
                 message.data = new SourceDemoBuffer(new ArrayBuffer(0));
 
-                message.packets.forEach((packet, index) => {
+                message.packets.forEach((packet) => {
                     message.data!.writeBits(packet.type, 6);
                     packet.write(message.data!, this);
                 });

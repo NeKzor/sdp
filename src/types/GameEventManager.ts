@@ -3,15 +3,15 @@ import { SourceDemoBuffer } from '../buffer.ts';
 export class GameEventDescriptor {
     eventId?: number;
     name?: string;
-    keys?: Record<string, number>;
+    keys?: Map<string, number>;
     read(buf: SourceDemoBuffer) {
         this.eventId = buf.readBits(9);
         this.name = buf.readASCIIString();
-        this.keys = {};
+        this.keys = new Map();
 
         let type = buf.readBits(3);
         while (type !== 0) {
-            this.keys[buf.readASCIIString()] = type;
+            this.keys.set(buf.readASCIIString(), type);
             type = buf.readBits(3);
         }
     }
@@ -19,13 +19,7 @@ export class GameEventDescriptor {
         buf.writeBits(this.eventId!, 9);
         buf.writeASCIIString(this.name!);
 
-        if (Object.values(this.keys!).length === 0) {
-            buf.writeBits(0, 3);
-            return;
-        }
-
-        // NOTE: Original order is not preserved
-        Object.entries(this.keys!).forEach(([key, type]) => {
+        this.keys!.forEach((type, key) => {
             buf.writeBits(type, 3);
             buf.writeASCIIString(key);
         });

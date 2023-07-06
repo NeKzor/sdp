@@ -50,7 +50,7 @@ describe('SourceDemoParser', () => {
                 throw err;
             }
         });
-        it('parse and save edited demo correctly', () => {
+        it('fully parse and save unedited demo correctly', () => {
             try {
                 const buffer = Deno.readFileSync('./demos/public/portal2_cm.dem');
                 const parser = SourceDemoParser.default()
@@ -58,6 +58,7 @@ describe('SourceDemoParser', () => {
                         dataTables: true,
                         stringTables: true,
                         userCmds: true,
+                        packets: true,
                     });
 
                 const demo = parser.parse(buffer);

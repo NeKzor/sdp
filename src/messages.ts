@@ -60,17 +60,17 @@ export class Packet extends Message {
     constructor(type: number) {
         super(type);
     }
-    findPacket<T extends NetMessage>(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
+    findPacket<T extends NetMessage>(type: new (type: number) => T | ((packet: NetMessage) => boolean)) {
         const byType = type instanceof NetMessage
             ? (packet: NetMessage) => packet instanceof type
-            : (packet: NetMessage) => (type as (packet: NetMessage) => boolean)(packet);
+            : (packet: NetMessage) => (type as unknown as (packet: NetMessage) => boolean)(packet);
 
         return (this.packets ?? []).find(byType) as T | undefined;
     }
-    findPackets<T extends NetMessage>(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
+    findPackets<T extends NetMessage>(type: new (type: number) => T | ((packet: NetMessage) => boolean)) {
         const byType = type instanceof NetMessage
             ? (packet: NetMessage) => packet instanceof type
-            : (packet: NetMessage) => (type as (packet: NetMessage) => boolean)(packet);
+            : (packet: NetMessage) => (type as unknown as (packet: NetMessage) => boolean)(packet);
 
         return (this.packets ?? []).filter(byType) as T[];
     }

@@ -35,22 +35,22 @@ export class SourceDemo {
     isNewEngine() {
         return this.demoProtocol === 4;
     }
-    findMessage<T extends Message>(type: typeof Message | ((msg: Message) => boolean)) {
+    findMessage<T extends Message>(type: new (type: number) => T | ((msg: Message) => boolean)) {
         const byType = type.prototype instanceof Message
             ? (msg: Message) => msg instanceof type
-            : (msg: Message) => (type as (msg: Message) => boolean)(msg);
+            : (msg: Message) => (type as unknown as (msg: Message) => boolean)(msg);
         return (this.messages ?? []).find(byType) as T | undefined;
     }
-    findMessages<T extends Message>(type: typeof Message | ((msg: Message) => boolean)) {
+    findMessages<T extends Message>(type: new (type: number) => T | ((msg: Message) => boolean)) {
         const byType = type.prototype instanceof Message
             ? (msg: Message) => msg instanceof type
-            : (msg: Message) => (type as (msg: Message) => boolean)(msg);
+            : (msg: Message) => (type as unknown as (msg: Message) => boolean)(msg);
         return (this.messages ?? []).filter(byType) as T[];
     }
-    findPacket<T extends NetMessage>(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
+    findPacket<T extends NetMessage>(type: new (type: number) => T | ((packet: NetMessage) => boolean)) {
         const byType = type.prototype instanceof NetMessage
             ? (packet: NetMessage) => packet instanceof type
-            : (packet: NetMessage) => (type as (msg: NetMessage) => boolean)(packet);
+            : (packet: NetMessage) => (type as unknown as (msg: NetMessage) => boolean)(packet);
 
         for (const msg of this.messages ?? []) {
             if (msg instanceof Packet) {
@@ -61,10 +61,10 @@ export class SourceDemo {
             }
         }
     }
-    findPackets<T extends NetMessage>(type: typeof NetMessage | ((packet: NetMessage) => boolean)) {
+    findPackets<T extends NetMessage>(type: new (type: number) => T | ((packet: NetMessage) => boolean)) {
         const isType = type.prototype instanceof NetMessage
             ? (packet: NetMessage) => packet instanceof type
-            : (packet: NetMessage) => (type as (msg: NetMessage) => boolean)(packet);
+            : (packet: NetMessage) => (type as unknown as (msg: NetMessage) => boolean)(packet);
 
         const packets: T[] = [];
         for (const msg of this.messages ?? []) {

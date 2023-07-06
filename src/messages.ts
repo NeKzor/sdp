@@ -165,7 +165,7 @@ export class Stop extends Message {
         return this;
     }
     write(buf: SourceDemoBuffer) {
-        buf.writeBitStream(this.restData!);
+        buf.writeBitStream(this.restData!, this.restData!.bitsLeft);
         return this;
     }
 }

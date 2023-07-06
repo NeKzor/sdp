@@ -487,7 +487,7 @@ export class BitStream {
         this._index += bitLength;
         return slice;
     }
-    writeBitStream(stream: BitStream, length?: number) {
+    writeBitStream(stream: BitStream, length: number) {
         if (!length) {
             length = stream.bitsLeft;
         }

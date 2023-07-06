@@ -170,7 +170,7 @@ export class SourceDemo {
                 message.userCmd.write(message.data!);
 
                 if (message.restData) {
-                    message.data.writeBitStream(message.restData);
+                    message.data.writeBitStream(message.restData, message.restData.bitsLeft);
                 }
 
                 message.data = new SourceDemoBuffer(message.data.view);
@@ -214,7 +214,7 @@ export class SourceDemo {
                 });
 
                 if (message.restData) {
-                    message.data.writeBitStream(message.restData);
+                    message.data.writeBitStream(message.restData, message.restData.bitsLeft);
                 }
 
                 message.data = new SourceDemoBuffer(message.data.view);
@@ -276,7 +276,7 @@ export class SourceDemo {
                 });
 
                 if (message.dataTable.restData) {
-                    message.data.writeBitStream(message.dataTable.restData);
+                    message.data.writeBitStream(message.dataTable.restData, message.dataTable.restData.bitsLeft);
                 }
 
                 message.data = new SourceDemoBuffer(message.data.view);
@@ -327,7 +327,7 @@ export class SourceDemo {
                 });
 
                 if (message.restData) {
-                    message.data.writeBitStream(message.restData);
+                    message.data.writeBitStream(message.restData, message.restData.bitsLeft);
                 }
 
                 message.data = new SourceDemoBuffer(message.data.view);

@@ -30,16 +30,17 @@ export class GameEventDescriptor {
 
 export class GameEvent {
     descriptor: GameEventDescriptor;
-    dataKeys: Record<string, string | number | boolean>;
+    dataKeys: Map<string, string | number | boolean>;
     constructor(descriptor: GameEventDescriptor) {
         this.descriptor = descriptor;
-        this.dataKeys = {};
+        this.dataKeys = new Map();
     }
-    get(keyName: string) {
-        return this.dataKeys[keyName];
+    get<T extends ReturnType<GameEvent['dataKeys']['get']>>(keyName: string) {
+        return this.dataKeys.get(keyName) as T;
     }
-    set(keyName: string, defaultValue: string | number | boolean) {
-        return (this.dataKeys[keyName] = defaultValue);
+    set<T extends Parameters<GameEvent['dataKeys']['set']>['1']>(keyName: string, defaultValue: T) {
+        this.dataKeys.set(keyName, defaultValue);
+        return defaultValue;
     }
 }
 
@@ -60,7 +61,7 @@ export class GameEventManager {
 
         const event = new GameEvent(descriptor);
 
-        for (const [keyName, type] of Object.entries(descriptor.keys ?? {})) {
+        for (const [keyName, type] of descriptor.keys!.entries()) {
             switch (type) {
                 case 0:
                     break;
@@ -92,27 +93,27 @@ export class GameEventManager {
     serializeEvent(event: GameEvent, buf: SourceDemoBuffer) {
         buf.writeBits(event.descriptor.eventId!, 9);
 
-        for (const [keyName, type] of Object.entries(event.descriptor.keys!)) {
+        for (const [keyName, type] of event.descriptor.keys!.entries()) {
             switch (type) {
                 case 0:
                     break;
                 case 1:
-                    buf.writeASCIIString(event.get(keyName) as string);
+                    buf.writeASCIIString(event.get(keyName));
                     break;
                 case 2:
-                    buf.writeFloat32(event.get(keyName) as number);
+                    buf.writeFloat32(event.get(keyName));
                     break;
                 case 3:
-                    buf.writeInt32(event.get(keyName) as number);
+                    buf.writeInt32(event.get(keyName));
                     break;
                 case 4:
-                    buf.writeInt16(event.get(keyName) as number);
+                    buf.writeInt16(event.get(keyName));
                     break;
                 case 5:
-                    buf.writeInt8(event.get(keyName) as number);
+                    buf.writeInt8(event.get(keyName));
                     break;
                 case 6:
-                    buf.writeBoolean(event.get(keyName) as boolean);
+                    buf.writeBoolean(event.get(keyName));
                     break;
                 default:
                     throw new Error(`Unknown type ${type} for key ${keyName}!`);

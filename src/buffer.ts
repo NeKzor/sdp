@@ -16,6 +16,17 @@ export class SourceDemoBuffer extends BitStream {
     ) {
         super(source, byteOffset, byteLength);
     }
+    static from(buffer: SourceDemoBuffer) {
+        const copy = new SourceDemoBuffer(buffer.view);
+        copy._index = buffer._index;
+        copy._startIndex = buffer._startIndex;
+        copy._length = buffer._length;
+        return copy;
+    }
+    reset() {
+        this._index = this._startIndex;
+        return this;
+    }
     readVector() {
         return new Vector(
             this.readFloat32(),

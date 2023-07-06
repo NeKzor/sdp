@@ -12,7 +12,7 @@ import { Messages, NetMessages, SourceDemoParser } from '../src/mod.ts';
 
 const file = Deno.args.at(0);
 if (!file) {
-    console.error('demo path argument not specified!');
+    console.error('Demo path argument not specified.');
     Deno.exit(1);
 }
 
@@ -24,7 +24,7 @@ let demo = parser
     .parse(buffer);
 
 if (demo.gameDirectory !== 'portal2') {
-    console.error('Demo is not from Portal 2!');
+    console.error('Demo is not from Portal 2.');
     Deno.exit(1);
 }
 

@@ -1,10 +1,12 @@
 {
     "tasks": {
         "test": "deno test -A",
-        "examples:jump-stats": "deno run --allow-read=demos examples/jump_stats.ts demos/public/portal2.dem",
         "build:npm": "deno run -A scripts/build_npm.ts",
         "build:dist": "deno run -A scripts/build_dist.ts",
-        "build:esbuild": "deno run -A scripts/build_esbuild.ts"
+        "build:esbuild": "deno run -A scripts/build_esbuild.ts",
+        "fixup": "deno run --allow-read=demos --allow-write=demos examples/fixup.ts demos/public/portal2_cm.dem",
+        "fixup:broken": "deno run --allow-read=demos --allow-write=demos examples/fixup.ts demos/public/portal2_requires_fixup.dem",
+        "jump-stats": "deno run --allow-read=demos examples/jump_stats.ts demos/public/portal2.dem"
     },
     "fmt": {
         "useTabs": false,

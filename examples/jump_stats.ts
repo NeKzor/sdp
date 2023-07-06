@@ -1,5 +1,4 @@
 import { DemoMessages, SourceDemoParser } from 'npm:@nekz/sdp';
-import { ConsoleCmd, UserCmd } from 'npm:@nekz/sdp/messages';
 
 const file = Deno.args.at(0);
 
@@ -15,11 +14,11 @@ const demo = SourceDemoParser.default()
 const IN_JUMP = 1 << 1;
 
 const registeredJumps = demo
-    .findMessages<UserCmd>(DemoMessages.UserCmd)
+    .findMessages(DemoMessages.UserCmd)
     .filter(({ userCmd }) => userCmd!.buttons! & IN_JUMP);
 
 const actualJumpInputs = demo
-    .findMessages<ConsoleCmd>(DemoMessages.ConsoleCmd)
+    .findMessages(DemoMessages.ConsoleCmd)
     .filter(({ command }) => command!.startsWith('+jump'));
 
 let prevTick = 0;

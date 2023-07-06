@@ -72,22 +72,22 @@ export class NetTick extends NetMessage {
     hostFrameTime?: number;
     hostFrameTimeStdDeviation?: number;
     read(buf: SourceDemoBuffer) {
-        const _NET_TICK_SCALEUP = 100000;
+        const NET_TICK_SCALEUP = 100_000;
         this.tick = buf.readInt32();
-        this.hostFrameTime = buf.readInt16();
-        this.hostFrameTimeStdDeviation = buf.readInt16();
-        // TODO
-        //this.hostFrameTime = buf.readInt16() / NET_TICK_SCALEUP;
-        //this.hostFrameTimeStdDeviation = buf.readInt16() / NET_TICK_SCALEUP;
+        this.hostFrameTime = buf.readInt16() / NET_TICK_SCALEUP;
+        this.hostFrameTimeStdDeviation = buf.readInt16() / NET_TICK_SCALEUP;
     }
     write(buf: SourceDemoBuffer) {
-        const _NET_TICK_SCALEUP = 100000;
+        const NET_TICK_SCALEUP = 100_000;
         buf.writeInt32(this.tick!);
-        buf.writeInt16(this.hostFrameTime!);
-        buf.writeInt16(this.hostFrameTimeStdDeviation!);
-        // TODO
-        //buf.writeInt16(this.hostFrameTime! * NET_TICK_SCALEUP);
-        //buf.writeInt16(this.hostFrameTimeStdDeviation! * NET_TICK_SCALEUP);
+
+        const [hostFrameTime, hostFrameTimeStdDeviation] = new Float32Array([
+            this.hostFrameTime! * NET_TICK_SCALEUP,
+            this.hostFrameTimeStdDeviation! * NET_TICK_SCALEUP,
+        ]);
+
+        buf.writeInt16(hostFrameTime!);
+        buf.writeInt16(hostFrameTimeStdDeviation!);
     }
 }
 export class NetStringCmd extends NetMessage {

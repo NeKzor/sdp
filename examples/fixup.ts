@@ -8,7 +8,7 @@
  */
 
 import { basename, dirname, join } from 'https://deno.land/std@0.140.0/path/posix.ts';
-import { Messages, NetMessages, SourceDemoParser } from '../src/mod.ts';
+import { Messages, SourceDemoParser } from '../src/mod.ts';
 
 const file = Deno.args.at(0);
 if (!file) {
@@ -44,6 +44,8 @@ if (!pointSurvey) {
     Deno.exit(1);
 }
 
+dt.tables.splice(pointSurvey, 1);
+
 const svc = dt.serverClasses.find((table) => table.dataTableName === 'DT_PointSurvey');
 if (!svc) {
     console.log('Failed to find DT_PointSurvey.');
@@ -52,14 +54,6 @@ if (!svc) {
 
 svc.className = 'CPointCamera';
 svc.dataTableName = 'DT_PointCamera';
-
-dt.tables.splice(pointSurvey, 1);
-dt.serverClasses.splice(pointSurvey, 1);
-
-// TODO
-// const packets = demo.findPackets<NetMessages.SvcTempEntities>(NetMessages.SvcTempEntities);
-// for (const packet of packets) {
-// }
 
 const saved = parser.save(demo, buffer.byteLength);
 

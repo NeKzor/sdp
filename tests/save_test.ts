@@ -54,7 +54,11 @@ describe('SourceDemoParser', () => {
             try {
                 const buffer = Deno.readFileSync('./demos/public/portal2_cm.dem');
                 const parser = SourceDemoParser.default()
-                    .setOptions({ dataTables: true });
+                    .setOptions({
+                        dataTables: true,
+                        stringTables: true,
+                        userCmds: true,
+                    });
 
                 const demo = parser.parse(buffer);
 

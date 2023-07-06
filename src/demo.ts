@@ -154,6 +154,10 @@ export class SourceDemo {
                 const cmd = new UserCmd();
                 cmd.read(message.data!);
                 message.userCmd = cmd;
+
+                if (message.data!.bitsLeft) {
+                    message.restData = message.data?.readBitStream(message.data!.bitsLeft);
+                }
             }
         }
 
@@ -162,7 +166,14 @@ export class SourceDemo {
     writeUserCmds() {
         for (const message of this.messages ?? []) {
             if (message instanceof DemoMessages.UserCmd && message.userCmd) {
+                message.data = new SourceDemoBuffer(new ArrayBuffer(message.data!.length / 8));
                 message.userCmd.write(message.data!);
+
+                if (message.restData) {
+                    message.data.writeBitStream(message.restData);
+                }
+
+                message.data = new SourceDemoBuffer(message.data.view);
             }
         }
 
@@ -174,10 +185,15 @@ export class SourceDemo {
                 const stringTables = [];
 
                 let tables = message.data?.readInt8() ?? 0;
+
                 while (tables--) {
                     const table = new StringTable();
                     table.read(message.data!, this);
                     stringTables.push(table);
+                }
+
+                if (message.data!.bitsLeft) {
+                    message.restData = message.data?.readBitStream(message.data!.bitsLeft);
                 }
 
                 message.stringTables = stringTables;
@@ -189,12 +205,19 @@ export class SourceDemo {
     writeStringTables() {
         for (const message of this.messages ?? []) {
             if (message instanceof DemoMessages.StringTable && message.stringTables) {
-                message.data = new SourceDemoBuffer(new ArrayBuffer(message.data!.length));
-                message.data!.writeInt8(message.stringTables.length);
+                message.data = new SourceDemoBuffer(new ArrayBuffer(message.data!.length / 8));
+
+                message.data.writeInt8(message.stringTables.length);
 
                 message.stringTables.forEach((stringTable) => {
                     stringTable.write(message.data!, this);
                 });
+
+                if (message.restData) {
+                    message.data.writeBitStream(message.restData);
+                }
+
+                message.data = new SourceDemoBuffer(message.data.view);
             }
         }
 
@@ -269,6 +292,7 @@ export class SourceDemo {
         for (const message of this.messages ?? []) {
             if (message instanceof Packet) {
                 const packets = [];
+
                 while ((message.data?.bitsLeft ?? 0) > 6) {
                     const type = message.data?.readBits(6) ?? -1;
 
@@ -282,6 +306,10 @@ export class SourceDemo {
                     }
                 }
 
+                if (message.data!.bitsLeft) {
+                    message.restData = message.data!.readBitStream(message.data!.bitsLeft);
+                }
+
                 message.packets = packets;
             }
         }
@@ -291,12 +319,18 @@ export class SourceDemo {
     writePackets() {
         for (const message of this.messages ?? []) {
             if (message instanceof Packet && message.packets) {
-                message.data = new SourceDemoBuffer(new ArrayBuffer(message.data!.length));
+                message.data = new SourceDemoBuffer(new ArrayBuffer(message.data!.length / 8));
 
                 message.packets.forEach((packet) => {
                     message.data!.writeBits(packet.type, 6);
                     packet.write(message.data!, this);
                 });
+
+                if (message.restData) {
+                    message.data.writeBitStream(message.restData);
+                }
+
+                message.data = new SourceDemoBuffer(message.data.view);
             }
         }
 

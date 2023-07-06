@@ -227,6 +227,7 @@ export class SvcSendTable extends NetMessage {
     }
 }
 export class SvcClassInfo extends NetMessage {
+    length?: number;
     createOnClient?: boolean;
     serverClasses?: {
         classId: number;
@@ -234,13 +235,14 @@ export class SvcClassInfo extends NetMessage {
         dataTableName: string;
     }[];
     read(buf: SourceDemoBuffer) {
-        let length = buf.readInt16();
+        this.length = buf.readInt16();
         this.createOnClient = buf.readBoolean();
         if (!this.createOnClient) {
             this.serverClasses = [];
-            while (length--) {
+            let count = this.length;
+            while (count--) {
                 this.serverClasses.push({
-                    classId: buf.readBits(Math.log2(length) + 1),
+                    classId: buf.readBits(Math.log2(count) + 1),
                     className: buf.readASCIIString(),
                     dataTableName: buf.readASCIIString(),
                 });
@@ -248,13 +250,13 @@ export class SvcClassInfo extends NetMessage {
         }
     }
     write(buf: SourceDemoBuffer) {
-        let length = this.serverClasses!.length;
-        buf.writeInt16(length);
+        buf.writeInt16(this.length!);
         buf.writeBoolean(this.createOnClient!);
         if (!this.createOnClient) {
+            let count = this.length!;
             this.serverClasses!.forEach(({ classId, className, dataTableName }) => {
-                --length;
-                buf.writeBits(classId, Math.log2(length) + 1);
+                --count;
+                buf.writeBits(classId, Math.log2(count) + 1);
                 buf.writeASCIIString(className);
                 buf.writeASCIIString(dataTableName);
             });
@@ -366,26 +368,29 @@ export class SvcPrint extends NetMessage {
 }
 export class SvcSounds extends NetMessage {
     reliableSound?: boolean;
+    soundsLength?: number;
     soundsData?: SourceDemoBuffer;
     sounds?: SoundInfo[];
     read(buf: SourceDemoBuffer, demo: SourceDemo) {
         this.reliableSound = buf.readBoolean();
-        let sounds = this.reliableSound ? 1 : buf.readBits(8);
+        this.soundsLength = this.reliableSound ? 1 : buf.readBits(8);
+
         const length = this.reliableSound ? buf.readBits(8) : buf.readBits(16);
-        const data = buf.readBitStream(length);
+        this.soundsData = buf.readBitStream(length);
+        this.sounds = [];
 
         if (demo.demoProtocol === 3) {
-            this.sounds = [];
+            let sounds = this.soundsLength;
             while (sounds--) {
                 const sound = new SoundInfo();
-                sound.read(data);
+                sound.read(this.soundsData);
                 this.sounds.push(sound);
             }
         }
     }
     write(buf: SourceDemoBuffer, demo: SourceDemo) {
         buf.writeBoolean(this.reliableSound!);
-        this.reliableSound === false && buf.writeBits(this.sounds!.length, 8);
+        !this.reliableSound && buf.writeBits(this.soundsLength!, 8);
 
         if (demo.demoProtocol === 3) {
             this.soundsData = new SourceDemoBuffer(new ArrayBuffer(this.soundsData!.length / 8));
@@ -635,7 +640,7 @@ export class SvcCmdKeyValues extends NetMessage {
     }
     write(buf: SourceDemoBuffer) {
         buf.writeInt32(this.buffer!.byteLength);
-        buf.writeArrayBuffer(this.buffer!, this.buffer!.byteLength);
+        buf.writeArrayBuffer(this.buffer!.buffer, this.buffer!.byteLength);
     }
 }
 export class SvcPaintMapData extends NetMessage {

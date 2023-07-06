@@ -80,26 +80,25 @@ export class StringTableEntry {
     constructor(name: string) {
         this.name = name;
     }
-    read(buf: SourceDemoBuffer, _type: StringTableEntryType | undefined, _demo: SourceDemo) {
+    read(buf: SourceDemoBuffer, type: StringTableEntryType | undefined, demo: SourceDemo) {
         this.length = buf.readInt16();
         this.dataBuffer = buf.readBitStream(this.length * 8);
 
-        // TODO
-        // if (type) {
-        //     this.data = new type();
-        //     this.data.read(this.dataBuffer, demo);
-        // }
+        if (type) {
+            this.data = new type();
+            this.data.read(this.dataBuffer, demo);
+        }
     }
-    write(buf: SourceDemoBuffer, _demo: SourceDemo) {
+    write(buf: SourceDemoBuffer, demo: SourceDemo) {
         buf.writeInt16(this.length!);
 
         if (this.data) {
-            // TODO
-            // this.dataBuffer = new SourceDemoBuffer(new ArrayBuffer(this.length!));
-            // this.data!.write(this.dataBuffer, demo);
+            this.dataBuffer = new SourceDemoBuffer(new ArrayBuffer(this.length!));
+            this.data!.write(this.dataBuffer, demo);
+            this.dataBuffer = new SourceDemoBuffer(this.dataBuffer.view);
         }
 
-        buf.writeBitStream(this.dataBuffer!, this.length!);
+        buf.writeBitStream(this.dataBuffer!, this.length! * 8);
     }
 }
 

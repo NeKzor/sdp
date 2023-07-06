@@ -56,6 +56,7 @@ export class Packet extends Message {
     inSequence?: number;
     outSequence?: number;
     data?: SourceDemoBuffer;
+    restData?: SourceDemoBuffer;
     constructor(type: number) {
         super(type);
     }
@@ -127,6 +128,7 @@ export class UserCmd extends Message {
     cmd?: number;
     data?: SourceDemoBuffer;
     userCmd?: UserCmdType;
+    restData?: SourceDemoBuffer;
     read(buf: SourceDemoBuffer) {
         this.cmd = buf.readInt32();
         this.data = buf.readBitStream(buf.readInt32() * 8);
@@ -185,6 +187,7 @@ export class CustomData extends Message {
 export class StringTable extends Message {
     data?: SourceDemoBuffer;
     stringTables?: StringTableType[];
+    restData?: SourceDemoBuffer;
     read(buf: SourceDemoBuffer) {
         this.data = buf.readBitStream(buf.readInt32() * 8);
         return this;

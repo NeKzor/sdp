@@ -16,9 +16,9 @@ describe('SourceDemoParser', () => {
                 const parser = SourceDemoParser.default();
                 const demo = parser.parse(buffer);
                 const saved = parser.save(demo, buffer.byteLength);
-    
+
                 assertEquals(buffer.byteLength, saved.byteLength, 'Equal buffer sizes');
-    
+
                 for (let i = 0; i < buffer.byteLength; ++i) {
                     const a = buffer.at(i);
                     const b = saved.at(i);
@@ -37,9 +37,9 @@ describe('SourceDemoParser', () => {
                 const parser = SourceDemoParser.default();
                 const demo = parser.parse(buffer);
                 const saved = parser.save(demo, buffer.byteLength);
-    
+
                 assertEquals(buffer.byteLength, saved.byteLength, 'Equal buffer sizes');
-    
+
                 for (let i = 0; i < buffer.byteLength; ++i) {
                     const a = buffer.at(i);
                     const b = saved.at(i);
@@ -61,9 +61,9 @@ describe('SourceDemoParser', () => {
                 const saved = parser.save(demo, buffer.byteLength);
 
                 const _parsed = parser.parse(saved);
-    
+
                 assertEquals(buffer.byteLength, saved.byteLength, 'Equal buffer sizes');
-    
+
                 for (let i = 0; i < buffer.byteLength; ++i) {
                     const a = buffer.at(i);
                     const b = saved.at(i);

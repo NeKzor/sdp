@@ -64,7 +64,7 @@ export class SourceDemoParser {
     }
     save(demo: SourceDemo, bufferSize: number) {
         if (!this.options.header || !this.options.header) {
-            throw new Error("Cannot save demo without parsed header and messages.");
+            throw new Error('Cannot save demo without parsed header and messages.');
         }
 
         if (demo.messages?.length) {

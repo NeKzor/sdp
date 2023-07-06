@@ -71,7 +71,7 @@ export class SourceDemoBuffer extends BitStream {
 
         const sign = value <= -COORD_RESOLUTION ? 1 : 0;
         let integer = Math.floor(Math.abs(value));
-        const fraction = Math.abs(Math.floor(value * COORD_DENOMINATOR)) & (COORD_DENOMINATOR -1);
+        const fraction = Math.abs(Math.floor(value * COORD_DENOMINATOR)) & (COORD_DENOMINATOR - 1);
 
         this.writeBits(integer, 1);
         this.writeBits(fraction, 1);

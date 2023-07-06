@@ -89,11 +89,11 @@ export class SoundInfo {
         }
 
         buf.writeBoolean(this.soundNum !== 0);
-        if (this.soundNum !== 0) { buf.writeBits(this.soundNum!, 13); }
+        if (this.soundNum !== 0) buf.writeBits(this.soundNum!, 13);
         buf.writeBoolean(this.flags !== 0);
-        if (this.flags !== 0) { buf.writeBits(this.flags!, 9); }
+        if (this.flags !== 0) buf.writeBits(this.flags!, 9);
         buf.writeBoolean(this.channel !== 0);
-        if (this.channel !== 0) { buf.writeBits(this.channel!, 3); }
+        if (this.channel !== 0) buf.writeBits(this.channel!, 3);
 
         buf.writeBoolean(this.isAmbient!);
         buf.writeBoolean(this.isSentence!);
@@ -109,11 +109,11 @@ export class SoundInfo {
             }
 
             buf.writeBoolean(this.volume !== 0);
-            if (this.volume !== 0) { buf.writeBits(this.volume! * 127, 7); }
+            if (this.volume !== 0) buf.writeBits(this.volume! * 127, 7);
             buf.writeBoolean(this.soundLevel !== 0);
-            if (this.soundLevel !== 0) { buf.writeBits(this.soundLevel!, 9); }
+            if (this.soundLevel !== 0) buf.writeBits(this.soundLevel!, 9);
             buf.writeBoolean(this.pitch !== 0);
-            if (this.pitch !== 0) { buf.writeBits(this.pitch!, 8); }
+            if (this.pitch !== 0) buf.writeBits(this.pitch!, 8);
 
             buf.writeBoolean(this.delay !== 0);
             if (this.delay !== 0) {

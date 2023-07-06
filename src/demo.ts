@@ -206,7 +206,7 @@ export class SourceDemo {
                 const dataTable: {
                     tables: SendTable[];
                     serverClasses: ServerClassInfo[];
-                    restData: SourceDemoBuffer | undefined,
+                    restData: SourceDemoBuffer | undefined;
                 } = {
                     tables: [],
                     serverClasses: [],

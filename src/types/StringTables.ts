@@ -91,7 +91,7 @@ export class StringTableEntry {
         // }
     }
     write(buf: SourceDemoBuffer, _demo: SourceDemo) {
-        buf.writeInt16(this.length!)
+        buf.writeInt16(this.length!);
 
         if (this.data) {
             // TODO
@@ -157,18 +157,18 @@ export class PlayerInfo {
             buf.writeInt32(this.version!);
             buf.writeInt32(this.xuid!);
         }
-        buf.writeASCIIString(this.name!,32);
+        buf.writeASCIIString(this.name!, 32);
         buf.writeInt32(this.userId!);
-        buf.writeASCIIString(this.guid!,32);
+        buf.writeASCIIString(this.guid!, 32);
         buf.writeInt32(this.friendsId!);
-        buf.writeASCIIString(this.friendsName!,32);
+        buf.writeASCIIString(this.friendsName!, 32);
         buf.writeBoolean(this.fakePlayer!);
         buf.writeBoolean(this.isHltv!);
         buf.writeInt32(this.customFiles!.at(0)!),
-        buf.writeInt32(this.customFiles!.at(1)!),
-        buf.writeInt32(this.customFiles!.at(2)!),
-        buf.writeInt32(this.customFiles!.at(3)!),
-        buf.writeInt32(this.filesDownloaded!);
+            buf.writeInt32(this.customFiles!.at(1)!),
+            buf.writeInt32(this.customFiles!.at(2)!),
+            buf.writeInt32(this.customFiles!.at(3)!),
+            buf.writeInt32(this.filesDownloaded!);
     }
 }
 

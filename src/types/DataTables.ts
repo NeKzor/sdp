@@ -60,6 +60,7 @@ export class SendTable {
     write(buf: SourceDemoBuffer, demo: SourceDemo) {
         buf.writeBoolean(this.needsDecoder!);
         buf.writeASCIIString(this.netTableName!);
+        buf.writeBits(this.props!.length, 10);
         this.props?.forEach((prop) => prop.write(buf, demo));
     }
 }

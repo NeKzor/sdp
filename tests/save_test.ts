@@ -50,5 +50,29 @@ describe('SourceDemoParser', () => {
                 throw err;
             }
         });
+        it('parse and save edited demo correctly', () => {
+            try {
+                const buffer = Deno.readFileSync('./demos/public/portal2_cm.dem');
+                const parser = SourceDemoParser.default()
+                    .setOptions({ dataTables: true });
+
+                const demo = parser.parse(buffer);
+
+                const saved = parser.save(demo, buffer.byteLength);
+
+                const _parsed = parser.parse(saved);
+    
+                assertEquals(buffer.byteLength, saved.byteLength, 'Equal buffer sizes');
+    
+                for (let i = 0; i < buffer.byteLength; ++i) {
+                    const a = buffer.at(i);
+                    const b = saved.at(i);
+                    assertEquals(a, b, `Equal byte at offset ${i}`);
+                }
+            } catch (err) {
+                console.error(err);
+                throw err;
+            }
+        });
     });
 });

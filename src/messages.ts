@@ -144,6 +144,7 @@ export class DataTable extends Message {
     dataTable?: {
         tables: SendTable[];
         serverClasses: ServerClassInfo[];
+        restData?: SourceDemoBuffer;
     };
     read(buf: SourceDemoBuffer) {
         this.data = buf.readBitStream(buf.readInt32() * 8);

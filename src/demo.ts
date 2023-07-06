@@ -189,7 +189,7 @@ export class SourceDemo {
     writeStringTables() {
         for (const message of this.messages ?? []) {
             if (message instanceof DemoMessages.StringTable && message.stringTables) {
-                message.data = new SourceDemoBuffer(new ArrayBuffer(0));
+                message.data = new SourceDemoBuffer(new ArrayBuffer(message.data!.length));
                 message.data!.writeInt8(message.stringTables.length);
 
                 message.stringTables.forEach((stringTable) => {
@@ -206,9 +206,11 @@ export class SourceDemo {
                 const dataTable: {
                     tables: SendTable[];
                     serverClasses: ServerClassInfo[];
+                    restData: SourceDemoBuffer | undefined,
                 } = {
                     tables: [],
                     serverClasses: [],
+                    restData: undefined,
                 };
 
                 while (message.data?.readBoolean()) {
@@ -224,6 +226,10 @@ export class SourceDemo {
                     dataTable.serverClasses.push(sc);
                 }
 
+                if (message.data!.bitsLeft) {
+                    dataTable.restData = message.data?.readBitStream(message.data!.bitsLeft);
+                }
+
                 message.dataTable = dataTable;
             }
         }
@@ -233,7 +239,7 @@ export class SourceDemo {
     writeDataTables() {
         for (const message of this.messages ?? []) {
             if (message instanceof DataTable && message.dataTable) {
-                message.data = new SourceDemoBuffer(new ArrayBuffer(0));
+                message.data = new SourceDemoBuffer(new ArrayBuffer(message.data!.length / 8));
 
                 message.dataTable.tables.forEach((dt) => {
                     message.data!.writeBoolean(true);
@@ -245,6 +251,12 @@ export class SourceDemo {
                 message.dataTable.serverClasses!.forEach((sc) => {
                     sc.write(message.data!);
                 });
+
+                if (message.dataTable.restData) {
+                    message.data.writeBitStream(message.dataTable.restData);
+                }
+
+                message.data = new SourceDemoBuffer(message.data.view);
             }
         }
 
@@ -279,7 +291,7 @@ export class SourceDemo {
     writePackets() {
         for (const message of this.messages ?? []) {
             if (message instanceof Packet && message.packets) {
-                message.data = new SourceDemoBuffer(new ArrayBuffer(0));
+                message.data = new SourceDemoBuffer(new ArrayBuffer(message.data!.length));
 
                 message.packets.forEach((packet) => {
                     message.data!.writeBits(packet.type, 6);

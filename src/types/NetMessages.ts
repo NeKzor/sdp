@@ -388,9 +388,8 @@ export class SvcSounds extends NetMessage {
         this.reliableSound === false && buf.writeBits(this.sounds!.length, 8);
 
         if (demo.demoProtocol === 3) {
-            // TODO
-            //this.soundsData = new SourceDemoBuffer(new ArrayBuffer(0));
-            //this.sounds!.forEach((sound) => sound.write(this.soundsData!));
+            this.soundsData = new SourceDemoBuffer(new ArrayBuffer(this.soundsData!.length / 8));
+            this.sounds!.forEach((sound) => sound.write(this.soundsData!));
         }
 
         buf.writeBits(this.soundsData!.length, this.reliableSound ? 8 : 16);
@@ -514,13 +513,12 @@ export class SvcGameEvent extends NetMessage {
     }
     write(buf: SourceDemoBuffer, demo: SourceDemo) {
         if (demo.gameEventManager) {
-            // TODO
-            //this.data = new SourceDemoBuffer(new ArrayBuffer(0));
-            //demo.gameEventManager.serializeEvent(this.event!, this.data);
+            this.data = new SourceDemoBuffer(new ArrayBuffer(this.data!.length / 8));
+            demo.gameEventManager.serializeEvent(this.event!, this.data);
         }
 
         buf.writeBits(this.data!.length, 11);
-        buf.writeBitStream(this.data!, this.data!.length);
+        buf.writeBitStream(this.data!, this.data!.length / 8);
     }
 }
 export class SvcPacketEntities extends NetMessage {
@@ -564,7 +562,7 @@ export class SvcTempEntities extends NetMessage {
     write(buf: SourceDemoBuffer) {
         buf.writeInt8(this.numEntries!);
         buf.writeBits(this.data!.length, 17);
-        buf.writeBitStream(this.data!, this.data!.length);
+        buf.writeBitStream(this.data!, this.data!.length / 8);
     }
 }
 export class SvcPrefetch extends NetMessage {
@@ -610,12 +608,11 @@ export class SvcGameEventList extends NetMessage {
     write(buf: SourceDemoBuffer, demo: SourceDemo) {
         buf.writeBits(demo.gameEventManager!.gameEvents!.length, 9);
 
-        // TODO
-        //this.data = new SourceDemoBuffer(new ArrayBuffer(0));
-        //demo.gameEventManager!.gameEvents.forEach((descriptor) => descriptor.read(this.data!));
+        this.data = new SourceDemoBuffer(new ArrayBuffer(this.data!.length / 8));
+        demo.gameEventManager!.gameEvents.forEach((descriptor) => descriptor.read(this.data!));
 
         buf.writeBits(this.data!.length, 20);
-        buf.writeBitStream(this.data!, this.data!.length);
+        buf.writeBitStream(this.data!, this.data!.length / 8);
     }
 }
 export class SvcGetCvarValue extends NetMessage {
@@ -649,7 +646,7 @@ export class SvcPaintMapData extends NetMessage {
     }
     write(buf: SourceDemoBuffer) {
         buf.writeInt32(this.data!.length);
-        buf.writeBitStream(this.data!, this.data!.length);
+        buf.writeBitStream(this.data!, this.data!.length / 8);
     }
 }
 

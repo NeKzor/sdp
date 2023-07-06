@@ -51,8 +51,8 @@ export class StringTable {
         this.entries!.forEach((entry) => {
             buf.writeASCIIString(entry.name!);
 
-            buf.writeBoolean(entry.data !== undefined);
-            if (entry.data !== undefined) {
+            buf.writeBoolean(entry.dataBuffer !== undefined);
+            if (entry.dataBuffer !== undefined) {
                 entry.write(buf, demo);
             }
         });
@@ -75,27 +75,31 @@ export class StringTable {
 export class StringTableEntry {
     name: string;
     length?: number;
-    data?: StringTableEntries | Uint8Array;
+    dataBuffer?: SourceDemoBuffer;
+    data?: StringTableEntries;
     constructor(name: string) {
         this.name = name;
     }
-    read(buf: SourceDemoBuffer, type: StringTableEntryType | undefined, demo: SourceDemo) {
+    read(buf: SourceDemoBuffer, _type: StringTableEntryType | undefined, _demo: SourceDemo) {
         this.length = buf.readInt16();
-        if (type) {
-            this.data = new type();
-            this.data.read(buf.readBitStream(this.length * 8), demo);
-        } else {
-            this.data = buf.readArrayBuffer(this.length);
-        }
+        this.dataBuffer = buf.readBitStream(this.length * 8);
+
+        // TODO
+        // if (type) {
+        //     this.data = new type();
+        //     this.data.read(this.dataBuffer, demo);
+        // }
     }
-    write(buf: SourceDemoBuffer, demo: SourceDemo) {
-        if (this.data instanceof Uint8Array) {
-            buf.writeInt16(this.data.byteLength!)
-            buf.writeArrayBuffer(this.data, this.data.byteLength);
-        } else {
-            buf.writeInt16(this.length!)
-            this.data!.write(buf, demo);
+    write(buf: SourceDemoBuffer, _demo: SourceDemo) {
+        buf.writeInt16(this.length!)
+
+        if (this.data) {
+            // TODO
+            // this.dataBuffer = new SourceDemoBuffer(new ArrayBuffer(this.length!));
+            // this.data!.write(this.dataBuffer, demo);
         }
+
+        buf.writeBitStream(this.dataBuffer!, this.length!);
     }
 }
 

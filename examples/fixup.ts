@@ -29,18 +29,21 @@ if (demo.gameDirectory !== 'portal2') {
 }
 
 demo = parser
-    .setOptions({ messages: true, packets: false, dataTables: true })
+    .setOptions({
+        messages: true,
+        dataTables: true,
+    })
     .parse(Deno.readFileSync(file));
 
-const dt = demo.findMessage<Messages.DataTable>(Messages.DataTable)?.dataTable;
+const dt = demo.findMessage(Messages.DataTable)?.dataTable;
 if (!dt) {
-    console.error('Could not find DataTable!');
+    console.error('[-] Could not find DataTable!');
     Deno.exit(1);
 }
 
 const pointSurvey = dt.tables.findIndex((table) => table.netTableName === 'DT_PointSurvey');
 if (!pointSurvey) {
-    console.log('Demo does not need a fixup.');
+    console.error('[-] Demo does not need a fixup.');
     Deno.exit(1);
 }
 
@@ -48,7 +51,7 @@ dt.tables.splice(pointSurvey, 1);
 
 const svc = dt.serverClasses.find((table) => table.dataTableName === 'DT_PointSurvey');
 if (!svc) {
-    console.log('Failed to find DT_PointSurvey.');
+    console.error('[-] Failed to find DT_PointSurvey.');
     Deno.exit(1);
 }
 
@@ -64,3 +67,5 @@ const fixed = join(
 );
 
 Deno.writeFileSync(fixed, saved);
+
+console.log(`[+] Saved to: ${fixed}`);

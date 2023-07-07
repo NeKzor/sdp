@@ -28,8 +28,8 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v3
 
-      - name: Copy Readme
-        run: cp README.md docs
+      - name: Copy Files
+        run: cp README.md showcase.gif docs
 
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1

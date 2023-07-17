@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2023, NeKz
+ * Copyright (c) 2023, NeKz
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@ import { Messages, SourceDemoParser } from '../src/mod.ts';
 
 const file = Deno.args.at(0);
 if (!file) {
-    console.error('Demo path argument not specified.');
+    console.error('[-] Demo path argument not specified.');
     Deno.exit(1);
 }
 
@@ -24,7 +24,7 @@ let demo = parser
     .parse(buffer);
 
 if (demo.gameDirectory !== 'portal2') {
-    console.error('Demo is not from Portal 2.');
+    console.error('[-] Demo is not from Portal 2.');
     Deno.exit(1);
 }
 
@@ -44,6 +44,19 @@ if (!dt) {
 const pointSurvey = dt.tables.findIndex((table) => table.netTableName === 'DT_PointSurvey');
 if (!pointSurvey) {
     console.error('[-] Demo does not need a fixup.');
+    Deno.exit(1);
+}
+
+const mapsWhichUsePointSurvey = [
+    'sp_a2_bts2',
+    'sp_a2_bts3',
+    'sp_a3_portal_intro',
+    'sp_a2_core',
+    'sp_a2_bts4',
+];
+
+if (mapsWhichUsePointSurvey.includes(demo.mapName!)) {
+    console.error('[-] Unfortunately the current fixup method does not work on this demo.');
     Deno.exit(1);
 }
 

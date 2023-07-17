@@ -112,18 +112,23 @@ export class SourceDemoBuffer extends BitStream {
         );
     }
     writeVectorCoord(vec: Vector) {
-        this.writeBoolean(vec.x !== 0);
-        if (vec.x !== 0) {
-            this.writeCoord(vec.x);
-        }
-        this.writeBoolean(vec.y !== 0);
-        if (vec.y !== 0) {
-            this.writeCoord(vec.y);
-        }
-        this.writeBoolean(vec.z !== 0);
-        if (vec.z !== 0) {
-            this.writeCoord(vec.z);
-        }
+        const COORD_FRACTIONAL_BITS = 5;
+        const COORD_DENOMINATOR = 1 << COORD_FRACTIONAL_BITS;
+        const COORD_RESOLUTION = 1.0 / COORD_DENOMINATOR;
+
+        const [x, y, z] = [
+            vec.x >= COORD_RESOLUTION || vec.x <= -COORD_RESOLUTION,
+            vec.y >= COORD_RESOLUTION || vec.y <= -COORD_RESOLUTION,
+            vec.z >= COORD_RESOLUTION || vec.z <= -COORD_RESOLUTION,
+        ];
+
+        this.writeBoolean(x);
+        this.writeBoolean(y);
+        this.writeBoolean(z);
+
+        x && this.writeCoord(vec.x);
+        y && this.writeCoord(vec.y);
+        z && this.writeCoord(vec.z);
     }
     readField(bits: number, fallbackValue = 0) {
         return this.readBoolean() ? this.readBits(bits) : fallbackValue;

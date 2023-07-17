@@ -35,19 +35,19 @@ export class SourceDemo {
     isNewEngine() {
         return this.demoProtocol === 4;
     }
-    findMessage<T extends Message>(type: new (type: number) => T | ((msg: Message) => boolean)) {
+    findMessage<T extends Message>(type: (new (type: number) => T) | ((msg: Message) => boolean)) {
         const byType = type.prototype instanceof Message
             ? (msg: Message) => msg instanceof type
             : (msg: Message) => (type as unknown as (msg: Message) => boolean)(msg);
         return (this.messages ?? []).find(byType) as T | undefined;
     }
-    findMessages<T extends Message>(type: new (type: number) => T | ((msg: Message) => boolean)) {
+    findMessages<T extends Message>(type: (new (type: number) => T) | ((msg: Message) => boolean)) {
         const byType = type.prototype instanceof Message
             ? (msg: Message) => msg instanceof type
             : (msg: Message) => (type as unknown as (msg: Message) => boolean)(msg);
         return (this.messages ?? []).filter(byType) as T[];
     }
-    findPacket<T extends NetMessage>(type: new (type: number) => T | ((packet: NetMessage) => boolean)) {
+    findPacket<T extends NetMessage>(type: (new (type: number) => T) | ((packet: NetMessage) => boolean)) {
         const byType = type.prototype instanceof NetMessage
             ? (packet: NetMessage) => packet instanceof type
             : (packet: NetMessage) => (type as unknown as (msg: NetMessage) => boolean)(packet);
@@ -61,7 +61,7 @@ export class SourceDemo {
             }
         }
     }
-    findPackets<T extends NetMessage>(type: new (type: number) => T | ((packet: NetMessage) => boolean)) {
+    findPackets<T extends NetMessage>(type: (new (type: number) => T) | ((packet: NetMessage) => boolean)) {
         const isType = type.prototype instanceof NetMessage
             ? (packet: NetMessage) => packet instanceof type
             : (packet: NetMessage) => (type as unknown as (msg: NetMessage) => boolean)(packet);

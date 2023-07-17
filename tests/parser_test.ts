@@ -6,8 +6,9 @@
 
 import { assert, assertEquals } from 'https://deno.land/std@0.191.0/testing/asserts.ts';
 import { describe, it } from 'https://deno.land/std@0.191.0/testing/bdd.ts';
-import { DemoMessages, SourceDemoParser, SourceTimer } from '../src/mod.ts';
+import { DemoMessages, SourceDemoParser, SourceTimer, NetMessages } from '../src/mod.ts';
 import { DataTable, Packet, StringTable, UserCmd } from '../src/messages.ts';
+import { ScoreboardTempUpdate } from '../src/types/UserMessages.ts';
 
 describe('SourceDemoParser', () => {
     describe('#Portal', () => {
@@ -229,6 +230,29 @@ describe('readPackets', function () {
             const { packets } = message;
 
             assertEquals(packets.length, 22);
+        });
+    });
+    describe('#Portal 2', () => {
+        it('read user message correctly', () => {
+            const buffer = Deno.readFileSync('./demos/public/portal2_cm.dem');
+
+            const demo = SourceDemoParser.default()
+                .setOptions({ packets: true })
+                .parse(buffer);
+
+            const packet = demo
+                .findPacket<NetMessages.SvcUserMessage>((packet) => {
+                    return packet instanceof NetMessages.SvcUserMessage &&
+                    !!packet.userMessage &&
+                    packet.userMessage instanceof ScoreboardTempUpdate;
+                });
+                
+
+            const scoreboard = packet?.userMessage?.as<ScoreboardTempUpdate>();
+            assert(scoreboard);
+
+            assertEquals(scoreboard.portalScore, 1);
+            assertEquals(scoreboard.timeScore, 2663);
         });
     });
     describe('#Portal', () => {

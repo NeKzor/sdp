@@ -9,6 +9,7 @@ import { GameEvent, GameEventDescriptor, GameEventManager } from './GameEventMan
 import { SourceDemoBuffer } from '../buffer.ts';
 import { SourceDemo } from '../demo.ts';
 import { Vector } from './Vector.ts';
+import { UserMessage, UserMessages } from './UserMessages.ts';
 
 export class NetMessage {
     type: number;
@@ -486,13 +487,29 @@ export class SvcUserMessage extends NetMessage {
     msgType?: number;
     msgDataLength?: number;
     msgData?: SourceDemoBuffer;
+    userMessage?: UserMessage;
     read(buf: SourceDemoBuffer, demo: SourceDemo) {
         this.msgType = buf.readInt8();
         this.msgDataLength = buf.readBits(demo.isNewEngine() ? 12 : 11);
         this.msgData = buf.readBitStream(this.msgDataLength);
+
+        if (demo.gameDirectory === 'portal2') {
+            const userMessageType = UserMessages.Portal2Engine[this.msgType];
+            if (userMessageType) {
+                this.userMessage = new userMessageType(this.msgType);
+                this.userMessage.read(this.msgData, demo);
+            }
+        }
     }
     write(buf: SourceDemoBuffer, demo: SourceDemo) {
         buf.writeInt8(this.msgType!);
+
+        if (this.userMessage) {
+            this.msgData = SourceDemoBuffer.from(this.msgData!);
+            this.userMessage.write(this.msgData, demo);
+            this.msgData.reset();
+        }
+
         buf.writeBits(this.msgDataLength!, demo.isNewEngine() ? 12 : 11);
         buf.writeBitStream(this.msgData!, this.msgDataLength!);
     }

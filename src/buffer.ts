@@ -130,6 +130,13 @@ export class SourceDemoBuffer extends BitStream {
         y && this.writeCoord(vec.y);
         z && this.writeCoord(vec.z);
     }
+    readAngles() {
+        const { x, y, z } = this.readVectorCoord();
+        return new QAngle(x, y, z);
+    }
+    writeAngles(angle: QAngle) {
+        return this.writeVectorCoord(new Vector(angle.pitch, angle.yaw, angle.roll));
+    }
     readField(bits: number, fallbackValue = 0) {
         return this.readBoolean() ? this.readBits(bits) : fallbackValue;
     }

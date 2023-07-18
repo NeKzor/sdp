@@ -6,7 +6,7 @@
 
 import { assert, assertEquals } from 'https://deno.land/std@0.191.0/testing/asserts.ts';
 import { describe, it } from 'https://deno.land/std@0.191.0/testing/bdd.ts';
-import { DemoMessages, SourceDemoParser, SourceTimer, NetMessages } from '../src/mod.ts';
+import { DemoMessages, NetMessages, SourceDemoParser, SourceTimer } from '../src/mod.ts';
 import { DataTable, Packet, StringTable, UserCmd } from '../src/messages.ts';
 import { ScoreboardTempUpdate } from '../src/types/UserMessages.ts';
 
@@ -243,10 +243,9 @@ describe('readPackets', function () {
             const packet = demo
                 .findPacket<NetMessages.SvcUserMessage>((packet) => {
                     return packet instanceof NetMessages.SvcUserMessage &&
-                    !!packet.userMessage &&
-                    packet.userMessage instanceof ScoreboardTempUpdate;
+                        !!packet.userMessage &&
+                        packet.userMessage instanceof ScoreboardTempUpdate;
                 });
-                
 
             const scoreboard = packet?.userMessage?.as<ScoreboardTempUpdate>();
             assert(scoreboard);

@@ -70,9 +70,9 @@ describe('SourceDemoParser', () => {
                 assertEquals(buffer.byteLength, saved.byteLength, 'Equal buffer sizes');
 
                 for (let i = 0; i < buffer.byteLength; ++i) {
-                    const a = buffer.at(i);
-                    const b = saved.at(i);
-                    assertEquals(a, b, `Equal byte at offset ${i}`);
+                    const expected = saved.at(i);
+                    const actual = buffer.at(i);
+                    assertEquals(expected, actual, `Equal byte at offset ${i}`);
                 }
             } catch (err) {
                 console.error(err);

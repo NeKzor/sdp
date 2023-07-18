@@ -8,7 +8,7 @@ if (!file) {
 }
 
 const demo = SourceDemoParser.default()
-    .setOptions({ packets: true})
+    .setOptions({ packets: true })
     .parse(Deno.readFileSync(file));
 
 const userMessages = demo

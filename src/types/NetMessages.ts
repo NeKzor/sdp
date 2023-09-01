@@ -47,15 +47,22 @@ export class NetFile extends NetMessage {
     transferId?: number;
     fileName?: string;
     fileRequested?: boolean;
-    read(buf: SourceDemoBuffer) {
+    unk?: boolean;
+    read(buf: SourceDemoBuffer, demo: SourceDemo) {
         this.transferId = buf.readInt32();
         this.fileName = buf.readASCIIString();
         this.fileRequested = buf.readBoolean();
+        if (demo.demoProtocol === 4) {
+            this.unk = buf.readBoolean();
+        }
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceDemoBuffer, demo: SourceDemo) {
         buf.writeInt32(this.transferId!);
         buf.writeASCIIString(this.fileName!);
         buf.writeBoolean(this.fileRequested!);
+        if (demo.demoProtocol === 4) {
+            buf.writeBoolean(this.unk!);
+        }
     }
 }
 export class NetSplitScreenUser extends NetMessage {

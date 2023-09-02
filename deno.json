@@ -13,7 +13,8 @@
         "lineWidth": 120,
         "indentWidth": 4,
         "singleQuote": true,
-        "proseWrap": "preserve"
+        "proseWrap": "preserve",
+        "exclude": ["npm/"]
     },
     "compilerOptions": {
         "noUncheckedIndexedAccess": true

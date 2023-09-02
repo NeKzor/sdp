@@ -388,7 +388,7 @@ export class SourceDemo {
 
         return this;
     }
-    adjustRange(endTick = 0, startTick = 0, tickrate = undefined) {
+    adjustRange(endTick = 0, startTick = 0, tickrate: number | undefined = undefined) {
         if (!this.messages?.length) {
             throw new Error('Cannot adjust range without parsed messages.');
         }

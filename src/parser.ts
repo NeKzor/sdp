@@ -41,13 +41,16 @@ export class SourceDemoParser {
         };
         return this;
     }
-    parse(buffer: ArrayBuffer) {
+    prepare(buffer: ArrayBuffer) {
         const extended = new Uint8Array(
             buffer.byteLength + 4 - (buffer.byteLength % 4),
         );
         extended.set(new Uint8Array(buffer), 0);
 
-        const buf = new SourceDemoBuffer(extended.buffer);
+        return new SourceDemoBuffer(extended.buffer);
+    }
+    parse(buffer: ArrayBuffer) {
+        const buf = this.prepare(buffer);
         const demo = SourceDemo.default();
 
         if (this.options.header) demo.readHeader(buf);

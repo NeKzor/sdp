@@ -388,7 +388,7 @@ export class SourceDemo {
 
         return this;
     }
-    adjustRange(endTick = 0, startTick = 0) {
+    adjustRange(endTick = 0, startTick = 0, tickrate = undefined) {
         if (!this.messages?.length) {
             throw new Error('Cannot adjust range without parsed messages.');
         }
@@ -407,7 +407,7 @@ export class SourceDemo {
             throw new Error('Start tick is greater than end tick.');
         }
 
-        const ipt = this.getIntervalPerTick();
+        const ipt = tickrate === undefined ? this.getIntervalPerTick() : 1 / tickrate;
         this.playbackTicks = delta;
         this.playbackTime = ipt * delta;
 

@@ -834,8 +834,13 @@ export class RemovePaint extends UserMessage {
 }
 // NOTE: Unused
 export class StartSurvey extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    handle?: number;
+    read(buf: SourceDemoBuffer) {
+        this.handle = buf.readUint32();
+    }
+    write(buf: SourceDemoBuffer) {
+        buf.writeUint32(this.handle!);
+    }
 }
 // TODO
 export class ApplyHitBoxDamageEffect extends UserMessage {

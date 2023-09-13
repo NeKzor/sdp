@@ -41,12 +41,6 @@ if (!dt) {
     Deno.exit(1);
 }
 
-const pointSurvey = dt.tables.findIndex((table) => table.netTableName === 'DT_PointSurvey');
-if (!pointSurvey) {
-    console.error('[-] Demo does not need a fixup.');
-    Deno.exit(1);
-}
-
 const mapsWhichUsePointSurvey = [
     'sp_a2_bts2',
     'sp_a2_bts3',
@@ -54,6 +48,23 @@ const mapsWhichUsePointSurvey = [
     'sp_a2_core',
     'sp_a2_bts4',
 ];
+
+const pointCameraClasses = dt.serverClasses.filter((table) => table.className === 'CPointCamera');
+if (pointCameraClasses.length === 2) {
+    if (mapsWhichUsePointSurvey.includes(demo.mapName!)) {
+        console.error('[-] Unfortunately this demo has been corrupted by demofixup.');
+        Deno.exit(1);
+    }
+
+    console.error('[-] Demo is already fixed.');
+    Deno.exit(1);
+}
+
+const pointSurvey = dt.tables.findIndex((table) => table.netTableName === 'DT_PointSurvey');
+if (pointSurvey === -1) {
+    console.error('[-] Demo does not need a fixup.');
+    Deno.exit(1);
+}
 
 if (mapsWhichUsePointSurvey.includes(demo.mapName!)) {
     console.error('[-] Unfortunately the current fixup method does not work on this demo.');

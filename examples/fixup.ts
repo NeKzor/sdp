@@ -23,8 +23,8 @@ let demo = parser
     .setOptions({ messages: false })
     .parse(buffer);
 
-if (demo.gameDirectory !== 'portal2') {
-    console.error('[-] Demo is not from Portal 2.');
+if (demo.gameDirectory !== 'portal2' && demo.gameDirectory !== 'Portal 2 Speedrun Mod') {
+    console.error('[-] Demo does not require a fixup.');
     Deno.exit(1);
 }
 

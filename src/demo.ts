@@ -185,7 +185,7 @@ export class SourceDemo {
                     data.writeBitStream(message.restData, message.restData.bitsLeft);
                 }
 
-                message.data = data.clone()
+                message.data = data.clone();
             }
         }
 
@@ -230,7 +230,7 @@ export class SourceDemo {
                     data.writeBitStream(message.restData, message.restData.bitsLeft);
                 }
 
-                message.data = data.clone()
+                message.data = data.clone();
             }
         }
 

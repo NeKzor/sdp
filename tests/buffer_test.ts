@@ -10,7 +10,7 @@ import { SourceDemoBuffer } from '../src/buffer.ts';
 
 describe('SourceDemoBuffer', () => {
     it('write bits correctly', () => {
-        const writer = new SourceDemoBuffer(new ArrayBuffer(100));
+        const writer = SourceDemoBuffer.allocate(100);
         writer.writeBits(0, 1);
         writer.writeBits(128, 11);
 

@@ -410,9 +410,9 @@ export class SvcSounds extends NetMessage {
         !this.reliableSound && buf.writeBits(this.soundsLength!, 8);
 
         if (demo.demoProtocol === 3) {
-            this.soundsData = new SourceDemoBuffer(new ArrayBuffer(this.soundsData!.length / 8));
-            this.sounds!.forEach((sound) => sound.write(this.soundsData!));
-            this.soundsData = new SourceDemoBuffer(this.soundsData.view);
+            const data = SourceDemoBuffer.allocateBits(this.soundsData!.length);
+            this.sounds!.forEach((sound) => sound.write(data));
+            this.soundsData = data.clone();
         }
 
         buf.writeBits(this.soundsDataLength!, this.reliableSound ? 8 : 16);
@@ -512,9 +512,9 @@ export class SvcUserMessage extends NetMessage {
         buf.writeInt8(this.msgType!);
 
         if (this.userMessage) {
-            this.msgData = SourceDemoBuffer.from(this.msgData!);
-            this.userMessage.write(this.msgData, demo);
-            this.msgData.reset();
+            const data = SourceDemoBuffer.from(this.msgData!);
+            this.userMessage.write(data, demo);
+            this.msgData = data.reset();
         }
 
         buf.writeBits(this.msgDataLength!, demo.isNewEngine() ? 12 : 11);
@@ -552,9 +552,9 @@ export class SvcGameEvent extends NetMessage {
     }
     write(buf: SourceDemoBuffer, demo: SourceDemo) {
         if (demo.gameEventManager) {
-            this.data = SourceDemoBuffer.from(this.data!);
-            demo.gameEventManager.serializeEvent(this.event!, this.data);
-            this.data.reset();
+            const data = SourceDemoBuffer.from(this.data!);
+            demo.gameEventManager.serializeEvent(this.event!, data);
+            this.data = data.reset();
         }
 
         buf.writeBits(this.data!.length!, 11);
@@ -652,9 +652,9 @@ export class SvcGameEventList extends NetMessage {
     write(buf: SourceDemoBuffer, demo: SourceDemo) {
         buf.writeBits(this.events!, 9);
 
-        this.data = new SourceDemoBuffer(new ArrayBuffer(this.dataLength!));
-        demo.gameEventManager!.gameEvents.forEach((descriptor) => descriptor.write(this.data!));
-        this.data = new SourceDemoBuffer(this.data.view);
+        const data = SourceDemoBuffer.allocate(this.dataLength!);
+        demo.gameEventManager!.gameEvents.forEach((descriptor) => descriptor.write(data));
+        this.data = data.clone();
 
         buf.writeBits(this.dataLength!, 20);
         buf.writeBitStream(this.data!, this.dataLength!);

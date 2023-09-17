@@ -79,5 +79,37 @@ describe('SourceDemoParser', () => {
                 throw err;
             }
         });
+        it('fully parse and save without mutating anything', () => {
+            try {
+                const buffer = Deno.readFileSync('./demos/public/p2sm_old.dem');
+                const parser = SourceDemoParser.default();
+                const demo = parser.parse(buffer);
+
+                demo.readStringTables();
+                demo.readDataTables();
+                demo.readPackets();
+                demo.readUserCmds();
+
+                const saved = parser.save(demo, buffer.byteLength);
+
+                demo.readStringTables();
+                demo.readDataTables();
+                demo.readPackets();
+                demo.readUserCmds();
+
+                const _parsed = parser.parse(saved);
+
+                assertEquals(buffer.byteLength, saved.byteLength, 'Equal buffer sizes');
+
+                for (let i = 0; i < buffer.byteLength; ++i) {
+                    const expected = saved.at(i);
+                    const actual = buffer.at(i);
+                    assertEquals(expected, actual, `Equal byte at offset ${i}`);
+                }
+            } catch (err) {
+                console.error(err);
+                throw err;
+            }
+        });
     });
 });

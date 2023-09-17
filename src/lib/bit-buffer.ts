@@ -312,6 +312,9 @@ export class BitStream {
     protected _startIndex: number;
     protected _length: number;
 
+    get offset() {
+        return this._index;
+    }
     get index() {
         return this._index - this._startIndex;
     }
@@ -431,6 +434,10 @@ export class BitStream {
     readBits(bits: number, signed?: boolean) {
         const val = this._view.getBits(this._index, bits, signed);
         this._index += bits;
+        return val;
+    }
+    peakBits(offset: number, bits: number, signed?: boolean) {
+        const val = this._view.getBits(offset, bits, signed);
         return val;
     }
     writeBits(value: number, bits: number) {

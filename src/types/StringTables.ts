@@ -93,9 +93,9 @@ export class StringTableEntry {
         buf.writeInt16(this.length!);
 
         if (this.data) {
-            this.dataBuffer = new SourceDemoBuffer(new ArrayBuffer(this.length!));
-            this.data!.write(this.dataBuffer, demo);
-            this.dataBuffer = new SourceDemoBuffer(this.dataBuffer.view);
+            const data = SourceDemoBuffer.allocate(this.length!);
+            this.data!.write(data, demo);
+            this.dataBuffer = data.clone();
         }
 
         buf.writeBitStream(this.dataBuffer!, this.length! * 8);

@@ -23,6 +23,18 @@ export class SourceDemoBuffer extends BitStream {
         copy._length = buffer._length;
         return copy;
     }
+    static allocate(bytes: number) {
+        return new SourceDemoBuffer(new ArrayBuffer(bytes));
+    }
+    static allocateBits(bits: number) {
+        if ((bits % 8) !== 0) {
+            throw new Error('Number of bits to allocate is not aligned!');
+        }
+        return new SourceDemoBuffer(new ArrayBuffer(bits / 8));
+    }
+    clone() {
+        return new SourceDemoBuffer(this.view);
+    }
     reset() {
         this._index = this._startIndex;
         return this;
@@ -172,6 +184,21 @@ export class SourceDemoBuffer extends BitStream {
         slice.length = bitLength;
         this._index += bitLength;
         return slice;
+    }
+    writeBitStream(stream: BitStream, length: number) {
+        if (!length) {
+            length = stream.bitsLeft;
+        }
+
+        let bitsToWrite = 0;
+        let offset = stream.offset;
+
+        while (length > 0) {
+            bitsToWrite = Math.min(length, 32);
+            this.writeBits(stream.peakBits(offset, bitsToWrite, false), bitsToWrite);
+            offset += bitsToWrite;
+            length -= bitsToWrite;
+        }
     }
     writeArrayBuffer(buffer: ArrayBuffer, byteLength: number) {
         this.writeBitStream(new SourceDemoBuffer(buffer), byteLength * 8);

@@ -500,7 +500,7 @@ export class SvcUserMessage extends NetMessage {
         this.msgDataLength = buf.readBits(demo.isNewEngine() ? 12 : 11);
         this.msgData = buf.readBitStream(this.msgDataLength);
 
-        if (demo.gameDirectory === 'portal2') {
+        if (demo.isPortal2Engine) {
             const userMessageType = UserMessages.Portal2Engine[this.msgType];
             if (userMessageType) {
                 this.userMessage = new userMessageType(this.msgType);

@@ -14,6 +14,15 @@ import { GameEventManager } from './types/GameEventManager.ts';
 import { SourceGame } from './speedrun/games/SourceGame.ts';
 import { SourceGames } from './speedrun/games/mod.ts';
 
+export const Portal2EngineGameMods = [
+    'portal2',
+    'TWTM',
+    'aperturetag',
+    'portal_stories',
+    'portalreloaded',
+    'Portal 2 Speedrun Mod',
+];
+
 export class SourceDemo {
     demoFileStamp?: string;
     demoProtocol?: number;
@@ -29,6 +38,7 @@ export class SourceDemo {
     messages?: Message[];
     game?: SourceGame;
     gameEventManager?: GameEventManager;
+    isPortal2Engine = false;
     static default() {
         return new this();
     }
@@ -94,6 +104,7 @@ export class SourceDemo {
         this.playbackFrames = buf.readInt32();
         this.signOnLength = buf.readInt32();
         this.messages = [];
+        this.isPortal2Engine = Portal2EngineGameMods.includes(this.gameDirectory);
         return this;
     }
     writeHeader(buf: SourceDemoBuffer) {

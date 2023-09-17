@@ -76,13 +76,11 @@ export class SendProp {
     numBits?: number;
     elements?: number;
     read(buf: SourceDemoBuffer, demo: SourceDemo) {
-        const isPortal2 = demo.gameDirectory === 'portal2';
-
         this.type = buf.readBits(5, false);
         this.varName = buf.readASCIIString();
         this.flags = buf.readBits(demo.demoProtocol === 2 ? 11 : 16, false);
 
-        if (isPortal2) {
+        if (demo.isPortal2Engine) {
             this.unk = buf.readBits(11, false);
         }
 
@@ -108,13 +106,11 @@ export class SendProp {
         }
     }
     write(buf: SourceDemoBuffer, demo: SourceDemo) {
-        const isPortal2 = demo.gameDirectory === 'portal2';
-
         buf.writeBits(this.type!, 5);
         buf.writeASCIIString(this.varName!);
         buf.writeBits(this.flags!, demo.demoProtocol === 2 ? 11 : 16);
 
-        if (isPortal2) {
+        if (demo.isPortal2Engine) {
             buf.writeBits(this.unk!, 11);
         }
 

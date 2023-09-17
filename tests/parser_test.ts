@@ -195,6 +195,42 @@ describe('readDataTables', () => {
             assertEquals(dataTable.serverClasses.length, 236);
         });
     });
+    describe('#Portal 2 Speedrun Mod (old)', () => {
+        it('read data tables correctly', () => {
+            const buffer = Deno.readFileSync('./demos/public/p2sm_old.dem');
+
+            const demo = SourceDemoParser.default()
+                .setOptions({ dataTables: true })
+                .parse(buffer);
+
+            const message = demo.findMessage<DataTable>(DemoMessages.DataTable);
+
+            assert(message?.dataTable);
+
+            const { dataTable } = message;
+
+            assertEquals(dataTable.tables.length, 307);
+            assertEquals(dataTable.serverClasses.length, 236);
+        });
+    });
+    describe('#Portal 2 Speedrun Mod (fixed)', () => {
+        it('read data tables correctly', () => {
+            const buffer = Deno.readFileSync('./demos/public/p2sm_fixed.dem');
+
+            const demo = SourceDemoParser.default()
+                .setOptions({ dataTables: true })
+                .parse(buffer);
+
+            const message = demo.findMessage<DataTable>(DemoMessages.DataTable);
+
+            assert(message?.dataTable);
+
+            const { dataTable } = message;
+
+            assertEquals(dataTable.tables.length, 306);
+            assertEquals(dataTable.serverClasses.length, 235);
+        });
+    });
     describe('#Portal', () => {
         it('read data tables correctly', () => {
             const buffer = Deno.readFileSync('./demos/public/portal.dem');

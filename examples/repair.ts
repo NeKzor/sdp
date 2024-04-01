@@ -10,6 +10,11 @@ import { basename, dirname, join } from 'https://deno.land/std@0.140.0/path/posi
 import { DemoMessages, NetMessages, SourceDemoParser } from '../src/mod.ts';
 
 const file = Deno.args.at(0);
+const options = Deno.args.at(1)?.toLowerCase() ?? '';
+
+const verbose = options.at(0) === '-' && options.includes('v');
+const dryRun = options.at(0) === '-' && options.includes('d');
+
 if (!file) {
     console.error('[-] Demo path argument not specified.');
     Deno.exit(1);
@@ -22,16 +27,31 @@ const demo = parser
     .setOptions({ packets: true })
     .parse(buffer);
 
-const isSvcSetPause = (packet: NetMessages.NetMessage) => packet instanceof NetMessages.SvcSetPause;
-
 let paused = false;
 
 demo.messages = demo.messages!.filter((message) => {
     if (message instanceof DemoMessages.Packet) {
-        const pausePacket = message.findPacket<NetMessages.SvcSetPause>(isSvcSetPause);
-        if (pausePacket) {
-            paused = pausePacket.paused!;
+        let pausePacketCount = 0;
+
+        for (const packet of message.packets!) {
+            if (packet instanceof NetMessages.SvcSetPause) {
+                paused = packet.paused!;
+                pausePacketCount += 1;
+            }
         }
+
+        // Drop the whole message during a pause but only if there aren't any other packets.
+        const dropMessage = paused && (!pausePacketCount || message.packets!.length <= pausePacketCount);
+
+        if (verbose && paused) {
+            console.log(
+                dropMessage ? '[+] Dropped message at tick' : '[-] Unable to drop message at tick',
+                message.tick,
+                message.packets,
+            );
+        }
+
+        return !dropMessage;
     }
 
     return !paused;
@@ -47,6 +67,8 @@ const fixed = join(
     filename.toLowerCase().endsWith('.dem') ? `${filename.slice(0, -4)}_repaired.dem` : `${filename}_repaired.dem`,
 );
 
-Deno.writeFileSync(fixed, saved);
+if (!dryRun) {
+    Deno.writeFileSync(fixed, saved);
 
-console.log(`[+] Saved to: ${fixed}`);
+    console.log(`[+] Saved to: ${fixed}`);
+}

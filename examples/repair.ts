@@ -54,7 +54,14 @@ demo.messages = demo.messages!.filter((message) => {
         return !dropMessage;
     }
 
-    return !paused;
+    if (
+        message instanceof DemoMessages.UserCmd ||
+        message instanceof DemoMessages.CustomData
+    ) {
+        return !paused;
+    }
+
+    return true;
 });
 
 const saved = parser

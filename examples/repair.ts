@@ -7,7 +7,7 @@
  */
 
 import { basename, dirname, join } from 'https://deno.land/std@0.140.0/path/posix.ts';
-import { DemoMessages, NetMessages, SourceDemoParser } from '../src/mod.ts';
+import { DemoMessages, Messages, NetMessages, ScoreboardTempUpdate, SourceDemoParser } from '../src/mod.ts';
 
 const file = Deno.args.at(0);
 const options = Deno.args.at(1)?.toLowerCase() ?? '';
@@ -28,15 +28,46 @@ const demo = parser
     .parse(buffer);
 
 let paused = false;
+let coop = false;
+let coopCmFlagsTouchCount = 0;
+let coopCmEndTick = -1;
+
+const didCoopChallengeModeFinish = (message: Messages.Message) => {
+    // Start dropping messages on the next tick
+    const drop = coopCmEndTick !== -1 && message.tick! > coopCmEndTick;
+    if (verbose && drop) {
+        console.log(
+            '[+] Dropped message because coop challenge mode run finished at tick',
+            message.tick,
+        );
+    }
+    return drop;
+};
 
 demo.messages = demo.messages!.filter((message) => {
     if (message instanceof DemoMessages.Packet) {
+        if (didCoopChallengeModeFinish(message)) {
+            return false;
+        }
+
         let pausePacketCount = 0;
 
         for (const packet of message.packets!) {
-            if (packet instanceof NetMessages.SvcSetPause) {
+            if (packet instanceof NetMessages.SvcServerInfo) {
+                coop = (packet.maxClients ?? 0) !== 0;
+            } else if (packet instanceof NetMessages.SvcSetPause) {
                 paused = packet.paused!;
                 pausePacketCount += 1;
+            } else if (
+                coop &&
+                packet instanceof NetMessages.SvcUserMessage &&
+                packet.userMessage instanceof ScoreboardTempUpdate
+            ) {
+                coopCmFlagsTouchCount += 1;
+
+                if (coopCmFlagsTouchCount > 1) {
+                    coopCmEndTick = message.tick!;
+                }
             }
         }
 
@@ -58,7 +89,17 @@ demo.messages = demo.messages!.filter((message) => {
         message instanceof DemoMessages.UserCmd ||
         message instanceof DemoMessages.CustomData
     ) {
+        if (didCoopChallengeModeFinish(message)) {
+            return false;
+        }
+
         return !paused;
+    }
+
+    if (message instanceof DemoMessages.ConsoleCmd) {
+        if (didCoopChallengeModeFinish(message)) {
+            return false;
+        }
     }
 
     return true;

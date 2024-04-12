@@ -7,7 +7,14 @@
  */
 
 import { basename, dirname, join } from 'https://deno.land/std@0.140.0/path/posix.ts';
-import { DemoMessages, Messages, NetMessages, ScoreboardTempUpdate, SourceDemoParser } from '../src/mod.ts';
+import {
+    DemoMessages,
+    Messages,
+    NetMessages,
+    ScoreboardTempUpdate,
+    SourceDemoBuffer,
+    SourceDemoParser,
+} from '../src/mod.ts';
 
 const file = Deno.args.at(0);
 const options = Deno.args.at(1)?.toLowerCase() ?? '';
@@ -24,12 +31,60 @@ const buffer = Deno.readFileSync(file);
 const parser = SourceDemoParser.default();
 
 const demo = parser
-    .setOptions({ packets: true })
+    .setOptions({ packets: true, dataTables: true })
     .parse(buffer);
+
+const tryFixup = () => {
+    const dt = demo.findMessage(Messages.DataTable)?.dataTable;
+    if (!dt) {
+        verbose && console.error('[-] Could not find DataTable!');
+        return;
+    }
+
+    const mapsWhichUsePointSurvey = [
+        'sp_a2_bts2',
+        'sp_a2_bts3',
+        'sp_a3_portal_intro',
+        'sp_a2_core',
+        'sp_a2_bts4',
+    ];
+
+    const pointCameraClasses = dt.serverClasses.filter((table) => table.className === 'CPointCamera');
+    if (pointCameraClasses.length === 2) {
+        if (mapsWhichUsePointSurvey.includes(demo.mapName!)) {
+            verbose && console.error('[-] Unfortunately this demo has been corrupted by demofixup.');
+        }
+        return;
+    }
+
+    const pointSurvey = dt.tables.findIndex((table) => table.netTableName === 'DT_PointSurvey');
+    if (pointSurvey === -1) {
+        return;
+    }
+
+    if (mapsWhichUsePointSurvey.includes(demo.mapName!)) {
+        verbose && console.error('[-] Unfortunately the current fixup method does not work on this demo.');
+        return;
+    }
+
+    dt.tables.splice(pointSurvey, 1);
+
+    const svc = dt.serverClasses.find((table) => table.dataTableName === 'DT_PointSurvey');
+    if (!svc) {
+        verbose && console.error('[-] Failed to find DT_PointSurvey.');
+        return;
+    }
+
+    svc.className = 'CPointCamera';
+    svc.dataTableName = 'DT_PointCamera';
+
+    verbose && console.log('[-] Replaced DT_PointSurvey');
+};
+
+tryFixup();
 
 let paused = false;
 let coop = false;
-let coopCmFlagsTouchCount = 0;
 let coopCmEndTick = -1;
 let didPopulateCustomCallbackMap = false;
 
@@ -64,11 +119,7 @@ demo.messages = demo.messages!.filter((message) => {
                 packet instanceof NetMessages.SvcUserMessage &&
                 packet.userMessage instanceof ScoreboardTempUpdate
             ) {
-                coopCmFlagsTouchCount += 1;
-
-                if (coopCmFlagsTouchCount > 1) {
-                    coopCmEndTick = message.tick!;
-                }
+                coopCmEndTick = message.tick! + 60; // Add 1s delay
             }
         }
 
@@ -118,6 +169,23 @@ demo.messages = demo.messages!.filter((message) => {
 
     return true;
 });
+
+const lastMessage = demo.messages!.at(-1);
+if (lastMessage && !(lastMessage instanceof Messages.Stop)) {
+    verbose && console.log('[+] Replacing corrupted message at tick', lastMessage.tick);
+
+    demo.detectGame()
+        .adjustTicks()
+        .adjustRange();
+
+    const stopMessage = new Messages.Stop(0x07)
+        .setTick(lastMessage.tick!)
+        .setSlot(lastMessage.slot!);
+
+    stopMessage.restData = new SourceDemoBuffer(new ArrayBuffer(0));
+
+    demo.messages![demo.messages!.length - 1] = stopMessage;
+}
 
 const saved = parser
     .setOptions({ packets: false })

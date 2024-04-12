@@ -31,6 +31,7 @@ let paused = false;
 let coop = false;
 let coopCmFlagsTouchCount = 0;
 let coopCmEndTick = -1;
+let didPopulateCustomCallbackMap = false;
 
 const didCoopChallengeModeFinish = (message: Messages.Message) => {
     // Start dropping messages on the next tick
@@ -89,6 +90,19 @@ demo.messages = demo.messages!.filter((message) => {
         message instanceof DemoMessages.UserCmd ||
         message instanceof DemoMessages.CustomData
     ) {
+        if (!didPopulateCustomCallbackMap && message instanceof DemoMessages.CustomData) {
+            didPopulateCustomCallbackMap = message.unk === -1;
+
+            if (!didPopulateCustomCallbackMap) {
+                verbose &&
+                    console.log(
+                        '[+] Dropping message because custom callback map is not populated at tick',
+                        message.tick,
+                    );
+                return false;
+            }
+        }
+
         if (didCoopChallengeModeFinish(message)) {
             return false;
         }

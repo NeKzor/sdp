@@ -3,7 +3,11 @@
  *
  * SPDX-License-Identifier: MIT
  *
- * This repairs demos that pause for too long.
+ * This repairs demos which:
+ *      - contain pauses causing the game to freeze
+ *      - are still running after a coop challenge mode run has finished
+ *      - end abruptly causing an incorrect demo header and corrupted last message
+ *      - are unplayable because of a patch that removed the CPointSurvey entity class
  */
 
 import { basename, dirname, join } from 'https://deno.land/std@0.140.0/path/posix.ts';

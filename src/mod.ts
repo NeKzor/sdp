@@ -1,8 +1,5 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
 export * from './speedrun/games/mod.ts';
 export * from './speedrun/games/SourceGame.ts';

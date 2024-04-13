@@ -1,8 +1,5 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
 import { ConsoleCmd, UserCmd } from '../messages.ts';
 import { SourceDemo } from '../demo.ts';
@@ -14,7 +11,7 @@ export class SarTimer {
         return new SarTimer();
     }
     time(demo: SourceDemo) {
-        if (!demo.messages?.length) {
+        if (!demo.messages.length) {
             throw new Error('Cannot adjust ticks without parsed messages.');
         }
 
@@ -52,16 +49,16 @@ export class SarReplay {
     }
     convert(demos: SourceDemo[]) {
         this.writeString(ReplayHeader);
-        this.writeInt32(demos.length);
+        this.writeInt32LE(demos.length);
 
         for (const demo of demos) {
             for (const message of demo.messages ?? []) {
                 if (message instanceof UserCmd && message.userCmd) {
-                    this.writeInt32(message.userCmd.buttons || 0);
+                    this.writeInt32LE(message.userCmd.buttons || 0);
                     this.writeFloat(message.userCmd.forwardMove || 0);
                     this.writeInt8(message.userCmd.impulse || 0);
-                    this.writeInt16(message.userCmd.mouseDx || 0);
-                    this.writeInt16(message.userCmd.mouseDy || 0);
+                    this.writeInt16LE(message.userCmd.mouseDx || 0);
+                    this.writeInt16LE(message.userCmd.mouseDy || 0);
                     this.writeFloat(message.userCmd.sideMove || 0);
                     this.writeFloat(message.userCmd.upMove || 0);
                     this.writeFloat(message.userCmd.viewAngleX || 0);
@@ -95,12 +92,12 @@ export class SarReplay {
         this.buffer = this.concat([this.buffer, data.buffer]);
         return result;
     }
-    writeInt16(value: number) {
+    writeInt16LE(value: number) {
         const data = this.alloc(2);
         data.setInt16(value, 0, true);
         this.buffer = this.concat([this.buffer, data.buffer]);
     }
-    writeInt32(value: number) {
+    writeInt32LE(value: number) {
         const data = this.alloc(4);
         data.setInt32(value, 0, true);
         this.buffer = this.concat([this.buffer, data.buffer]);

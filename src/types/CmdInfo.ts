@@ -1,10 +1,7 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
-import { SourceDemoBuffer } from '../buffer.ts';
+import { SourceBuffer } from '../buffer.ts';
 import { QAngle } from './QAngle.ts';
 import { Vector } from './Vector.ts';
 
@@ -16,8 +13,8 @@ export class CmdInfo {
     viewOrigin2?: Vector;
     viewAngles2?: QAngle;
     localViewAngles2?: QAngle;
-    read(buf: SourceDemoBuffer) {
-        this.flags = buf.readInt32();
+    read(buf: SourceBuffer) {
+        this.flags = buf.readInt32LE();
         this.viewOrigin = buf.readVector();
         this.viewAngles = buf.readQAngle();
         this.localViewAngles = buf.readQAngle();
@@ -27,8 +24,8 @@ export class CmdInfo {
 
         return this;
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeInt32(this.flags!);
+    write(buf: SourceBuffer) {
+        buf.writeInt32LE(this.flags!);
         buf.writeVector(this.viewOrigin!);
         buf.writeQAngle(this.viewAngles!);
         buf.writeQAngle(this.localViewAngles!);

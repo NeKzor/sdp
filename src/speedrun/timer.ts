@@ -1,8 +1,5 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
 import { Vector } from '../types/Vector.ts';
 import { ConsoleCmd, Packet } from '../messages.ts';

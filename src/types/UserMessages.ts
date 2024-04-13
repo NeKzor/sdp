@@ -1,11 +1,7 @@
-/*
- * Copyright (c) 2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2023-2024, NeKz
+// SPDX-License-Identifier: MIT
 
-import { SourceDemoBuffer } from '../buffer.ts';
-import { SourceDemo } from '../demo.ts';
+import { SourceBuffer } from '../buffer.ts';
 import { QAngle } from './QAngle.ts';
 import { Vector } from './Vector.ts';
 
@@ -20,10 +16,10 @@ export class UserMessage {
     getName() {
         return this.constructor.name;
     }
-    read(_buf: SourceDemoBuffer, _demo: SourceDemo) {
+    read(_buf: SourceBuffer) {
         throw new Error(`read() for ${this.constructor.name} not implemented!`);
     }
-    write(_buf: SourceDemoBuffer, _demo: SourceDemo) {
+    write(_buf: SourceBuffer) {
         throw new Error(`write() for ${this.constructor.name} not implemented!`);
     }
     as<T extends UserMessage>() {
@@ -33,43 +29,43 @@ export class UserMessage {
 
 export class Geiger extends UserMessage {
     geigerRange?: number;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.geigerRange = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.geigerRange!);
     }
 }
 export class Train extends UserMessage {
     pos?: number;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.pos = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.pos!);
     }
 }
 export class HudText extends UserMessage {
     text?: string;
-    read(buf: SourceDemoBuffer) {
-        this.text = buf.readASCIIString();
+    read(buf: SourceBuffer) {
+        this.text = buf.readCString();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeASCIIString(this.text!);
+    write(buf: SourceBuffer) {
+        buf.writeCString(this.text!);
     }
 }
 export class SayText extends UserMessage {
     client?: number;
     text?: string;
     wantsToChat?: number;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.client = buf.readUint8();
-        this.text = buf.readASCIIString();
+        this.text = buf.readCString();
         this.wantsToChat = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.client!);
-        buf.writeASCIIString(this.text!);
+        buf.writeCString(this.text!);
         buf.writeUint8(this.wantsToChat!);
     }
 }
@@ -79,26 +75,26 @@ export class SayText2 extends UserMessage {
     wantsToChat?: number;
     messageText?: string;
     messages?: [string, string, string, string];
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.client = buf.readUint8();
-        this.text = buf.readASCIIString();
+        this.text = buf.readCString();
         this.wantsToChat = buf.readUint8();
-        this.messageText = buf.readASCIIString();
+        this.messageText = buf.readCString();
         this.messages = [
-            buf.readASCIIString(),
-            buf.readASCIIString(),
-            buf.readASCIIString(),
-            buf.readASCIIString(),
+            buf.readCString(),
+            buf.readCString(),
+            buf.readCString(),
+            buf.readCString(),
         ];
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.client!);
-        buf.writeASCIIString(this.text!);
+        buf.writeCString(this.text!);
         buf.writeUint8(this.wantsToChat!);
-        buf.writeASCIIString(this.messageText!);
+        buf.writeCString(this.messageText!);
 
         for (const message of this.messages!.values()) {
-            buf.writeASCIIString(message);
+            buf.writeCString(message);
         }
     }
 }
@@ -111,19 +107,19 @@ export enum HudPrint {
 export class TextMsg extends UserMessage {
     msgDest?: HudPrint;
     output?: [string, string, string, string, string];
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.msgDest = buf.readUint8();
         this.output = ['', '', '', '', ''];
 
         for (let i = 0; i < 5; ++i) {
-            this.output[i] = buf.readASCIIString();
+            this.output[i] = buf.readCString();
         }
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.msgDest!);
 
         for (const str of this.output!.values() ?? []) {
-            buf.writeASCIIString(str);
+            buf.writeCString(str);
         }
     }
 }
@@ -148,11 +144,11 @@ export interface HudTextParms {
 export class HudMsg extends UserMessage {
     textParms?: HudTextParms;
     message?: string;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.textParms = {
             channel: buf.readUint8(),
-            x: buf.readFloat32(),
-            y: buf.readFloat32(),
+            x: buf.readFloat32LE(),
+            y: buf.readFloat32LE(),
             r1: buf.readUint8(),
             g1: buf.readUint8(),
             b1: buf.readUint8(),
@@ -161,18 +157,18 @@ export class HudMsg extends UserMessage {
             g2: buf.readUint8(),
             b2: buf.readUint8(),
             a2: buf.readUint8(),
-            effect: buf.readFloat32(),
-            fadeinTime: buf.readFloat32(),
-            fadeoutTime: buf.readFloat32(),
-            holdTime: buf.readFloat32(),
-            fxTime: buf.readFloat32(),
+            effect: buf.readFloat32LE(),
+            fadeinTime: buf.readFloat32LE(),
+            fadeoutTime: buf.readFloat32LE(),
+            holdTime: buf.readFloat32LE(),
+            fxTime: buf.readFloat32LE(),
         };
-        this.message = buf.readASCIIString();
+        this.message = buf.readCString();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.textParms!.channel);
-        buf.writeFloat32(this.textParms!.x);
-        buf.writeFloat32(this.textParms!.y);
+        buf.writeFloat32LE(this.textParms!.x);
+        buf.writeFloat32LE(this.textParms!.y);
         buf.writeUint8(this.textParms!.r1);
         buf.writeUint8(this.textParms!.g1);
         buf.writeUint8(this.textParms!.b1);
@@ -181,40 +177,40 @@ export class HudMsg extends UserMessage {
         buf.writeUint8(this.textParms!.g2);
         buf.writeUint8(this.textParms!.b2);
         buf.writeUint8(this.textParms!.a2);
-        buf.writeFloat32(this.textParms!.effect);
-        buf.writeFloat32(this.textParms!.fadeinTime);
-        buf.writeFloat32(this.textParms!.fadeoutTime);
-        buf.writeFloat32(this.textParms!.holdTime);
-        buf.writeFloat32(this.textParms!.fxTime);
-        buf.writeASCIIString(this.message!);
+        buf.writeFloat32LE(this.textParms!.effect);
+        buf.writeFloat32LE(this.textParms!.fadeinTime);
+        buf.writeFloat32LE(this.textParms!.fadeoutTime);
+        buf.writeFloat32LE(this.textParms!.holdTime);
+        buf.writeFloat32LE(this.textParms!.fxTime);
+        buf.writeCString(this.message!);
     }
 }
 export class ResetHUD extends UserMessage {
     reset?: number;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.reset = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.reset!);
     }
 }
 export class GameTitle extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 export class ItemPickup extends UserMessage {
     name?: string;
-    read(buf: SourceDemoBuffer) {
-        this.name = buf.readASCIIString();
+    read(buf: SourceBuffer) {
+        this.name = buf.readCString();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeASCIIString(this.name!);
+    write(buf: SourceBuffer) {
+        buf.writeCString(this.name!);
     }
 }
 // NOTE: Unused
 export class ShowMenu extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 export enum ShakeCommand {
     Start = 0,
@@ -229,17 +225,17 @@ export class Shake extends UserMessage {
     amplitude?: number;
     frequency?: number;
     duration?: number;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.command = buf.readUint8();
-        this.amplitude = buf.readFloat32();
-        this.frequency = buf.readFloat32();
-        this.duration = buf.readFloat32();
+        this.amplitude = buf.readFloat32LE();
+        this.frequency = buf.readFloat32LE();
+        this.duration = buf.readFloat32LE();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.command!);
-        buf.writeFloat32(this.amplitude!);
-        buf.writeFloat32(this.frequency!);
-        buf.writeFloat32(this.duration!);
+        buf.writeFloat32LE(this.amplitude!);
+        buf.writeFloat32LE(this.frequency!);
+        buf.writeFloat32LE(this.duration!);
     }
 }
 export class Tilt extends UserMessage {
@@ -248,19 +244,19 @@ export class Tilt extends UserMessage {
     angle?: QAngle;
     duration?: number;
     time?: number;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.command = buf.readUint8();
         this.easeInOut = buf.readUint8();
         this.angle = buf.readQAngle();
-        this.duration = buf.readFloat32();
-        this.time = buf.readFloat32();
+        this.duration = buf.readFloat32LE();
+        this.time = buf.readFloat32LE();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.command!);
         buf.writeUint8(this.easeInOut!);
         buf.writeQAngle(this.angle!);
-        buf.writeFloat32(this.duration!);
-        buf.writeFloat32(this.time!);
+        buf.writeFloat32LE(this.duration!);
+        buf.writeFloat32LE(this.time!);
     }
 }
 export class Fade extends UserMessage {
@@ -268,10 +264,10 @@ export class Fade extends UserMessage {
     holdTime?: number;
     fadeFlags?: number;
     fade?: { r: number; g: number; b: number; a: number };
-    read(buf: SourceDemoBuffer) {
-        this.duration = buf.readUint16();
-        this.holdTime = buf.readUint16();
-        this.fadeFlags = buf.readUint16();
+    read(buf: SourceBuffer) {
+        this.duration = buf.readUint16LE();
+        this.holdTime = buf.readUint16LE();
+        this.fadeFlags = buf.readUint16LE();
         this.fade = {
             r: buf.readUint8(),
             g: buf.readUint8(),
@@ -279,10 +275,10 @@ export class Fade extends UserMessage {
             a: buf.readUint8(),
         };
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeUint16(this.duration!);
-        buf.writeUint16(this.holdTime!);
-        buf.writeUint16(this.fadeFlags!);
+    write(buf: SourceBuffer) {
+        buf.writeUint16LE(this.duration!);
+        buf.writeUint16LE(this.holdTime!);
+        buf.writeUint16LE(this.fadeFlags!);
         buf.writeUint8(this.fade!.r);
         buf.writeUint8(this.fade!.g);
         buf.writeUint8(this.fade!.b);
@@ -294,27 +290,27 @@ export class VGUIMenu extends UserMessage {
     show?: number;
     size?: number;
     keyValues?: { key: string; value: string }[];
-    read(buf: SourceDemoBuffer) {
-        this.name = buf.readASCIIString();
+    read(buf: SourceBuffer) {
+        this.name = buf.readCString();
         this.show = buf.readUint8();
         this.size = buf.readUint8();
         this.keyValues = [];
 
         for (let i = 0; i < this.size; ++i) {
             this.keyValues.push({
-                key: buf.readASCIIString(),
-                value: buf.readASCIIString(),
+                key: buf.readCString(),
+                value: buf.readCString(),
             });
         }
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeASCIIString(this.name!);
+    write(buf: SourceBuffer) {
+        buf.writeCString(this.name!);
         buf.writeUint8(this.show!);
         buf.writeUint8(this.size!);
 
         this.keyValues!.forEach(({ key, value }) => {
-            buf.writeASCIIString(key);
-            buf.writeASCIIString(value);
+            buf.writeCString(key);
+            buf.writeCString(value);
         });
     }
 }
@@ -322,12 +318,12 @@ export class Rumble extends UserMessage {
     index?: number;
     data?: number;
     flags?: number;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.index = buf.readUint8();
         this.data = buf.readUint8();
         this.flags = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.index!);
         buf.writeUint8(this.data!);
         buf.writeUint8(this.flags!);
@@ -335,62 +331,62 @@ export class Rumble extends UserMessage {
 }
 export class Battery extends UserMessage {
     battery?: number;
-    read(buf: SourceDemoBuffer) {
-        this.battery = buf.readUint16();
+    read(buf: SourceBuffer) {
+        this.battery = buf.readUint16LE();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeUint16(this.battery!);
+    write(buf: SourceBuffer) {
+        buf.writeUint16LE(this.battery!);
     }
 }
 // NOTE: Unused
 export class Damage extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 export class VoiceMask extends UserMessage {
     audiblePlayers?: [number, number];
     serverBannedPlayers?: [number, number];
     serverModEnabled?: number;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         const VOICE_MAX_PLAYERS_DW = 2;
 
         this.audiblePlayers = [0, 0];
         this.serverBannedPlayers = [0, 0];
 
         for (let index = 0; index < VOICE_MAX_PLAYERS_DW; ++index) {
-            this.audiblePlayers[index] = buf.readUint32();
-            this.serverBannedPlayers[index] = buf.readUint32();
+            this.audiblePlayers[index] = buf.readUint32LE();
+            this.serverBannedPlayers[index] = buf.readUint32LE();
         }
 
         this.serverModEnabled = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         const VOICE_MAX_PLAYERS_DW = 2;
 
         for (let index = 0; index < VOICE_MAX_PLAYERS_DW; ++index) {
-            buf.writeUint32(this.audiblePlayers![index]!);
-            buf.writeUint32(this.serverBannedPlayers![index]!);
+            buf.writeUint32LE(this.audiblePlayers![index]!);
+            buf.writeUint32LE(this.serverBannedPlayers![index]!);
         }
 
         buf.writeUint8(this.serverModEnabled!);
     }
 }
 export class RequestState extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 export class CloseCaption extends UserMessage {
     hash?: number;
     duration?: number;
     fromPlayer?: boolean;
-    read(buf: SourceDemoBuffer) {
-        this.hash = buf.readUint32();
-        this.duration = buf.readBits(15, false);
+    read(buf: SourceBuffer) {
+        this.hash = buf.readUint32LE();
+        this.duration = buf.readUBitsLE(15);
         this.fromPlayer = buf.readBoolean();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeUint32(this.hash!);
-        buf.writeBits(this.duration!, 15);
+    write(buf: SourceBuffer) {
+        buf.writeUint32LE(this.hash!);
+        buf.writeBitsLE(this.duration!, 15);
         buf.writeBoolean(this.fromPlayer!);
     }
 }
@@ -398,50 +394,50 @@ export class CloseCaptionDirect extends UserMessage {
     hash?: number;
     duration?: number;
     fromPlayer?: boolean;
-    read(buf: SourceDemoBuffer) {
-        this.hash = buf.readUint32();
-        this.duration = buf.readBits(15, false);
+    read(buf: SourceBuffer) {
+        this.hash = buf.readUint32LE();
+        this.duration = buf.readUBitsLE(15);
         this.fromPlayer = buf.readBoolean();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeUint32(this.hash!);
-        buf.writeBits(this.duration!, 15);
+    write(buf: SourceBuffer) {
+        buf.writeUint32LE(this.hash!);
+        buf.writeBitsLE(this.duration!, 15);
         buf.writeBoolean(this.fromPlayer!);
     }
 }
 export class HintText extends UserMessage {
     hintString?: string;
-    read(buf: SourceDemoBuffer) {
-        this.hintString = buf.readASCIIString();
+    read(buf: SourceBuffer) {
+        this.hintString = buf.readCString();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeASCIIString(this.hintString!);
+    write(buf: SourceBuffer) {
+        buf.writeCString(this.hintString!);
     }
 }
 export class KeyHintText extends UserMessage {
     messages?: 1;
     message?: string;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.messages = buf.readUint8() as 1;
-        this.message = buf.readASCIIString();
+        this.message = buf.readCString();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.messages!);
-        buf.writeASCIIString(this.message!);
+        buf.writeCString(this.message!);
     }
 }
 // NOTE: Unused
 export class SquadMemberDied extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 // NOTE: Unused
 export class AmmoDenied extends UserMessage {
     ammo?: number;
-    read(_buf: SourceDemoBuffer) {
+    read(_buf: SourceBuffer) {
         // this.ammo = buf.readUint16();
     }
-    write(_buf: SourceDemoBuffer) {
+    write(_buf: SourceBuffer) {
         // buf.writeUint16(this.ammo);
     }
 }
@@ -452,39 +448,39 @@ export enum CreditsType {
 }
 export class CreditsMsg extends UserMessage {
     creditsType?: CreditsType;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.creditsType = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.creditsType!);
     }
 }
 export class LogoTimeMsg extends UserMessage {
     time?: number;
-    read(buf: SourceDemoBuffer) {
-        this.time = buf.readFloat32();
+    read(buf: SourceBuffer) {
+        this.time = buf.readFloat32LE();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeFloat32(this.time!);
+    write(buf: SourceBuffer) {
+        buf.writeFloat32LE(this.time!);
     }
 }
 // NOTE: Unused
 export class AchievementEvent extends UserMessage {
     achievementId?: number;
-    read(_buf: SourceDemoBuffer) {
+    read(_buf: SourceBuffer) {
         // this.achievementId = buf.readUint16();
     }
-    write(_buf: SourceDemoBuffer) {
+    write(_buf: SourceBuffer) {
         // buf.writeUint16(this.achievementId);
     }
 }
 export class UpdateJalopyRadar extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 export class CurrentTimescale extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 export enum GameTimescaleInterpolators {
     Linear = 0,
@@ -497,17 +493,17 @@ export class DesiredTimescale extends UserMessage {
     durationRealTimeSeconds?: number;
     interpolationType?: GameTimescaleInterpolators;
     startBlendTime?: number;
-    read(buf: SourceDemoBuffer) {
-        this.desiredTimescale = buf.readFloat32();
-        this.durationRealTimeSeconds = buf.readFloat32();
+    read(buf: SourceBuffer) {
+        this.desiredTimescale = buf.readFloat32LE();
+        this.durationRealTimeSeconds = buf.readFloat32LE();
         this.interpolationType = buf.readUint8();
-        this.startBlendTime = buf.readFloat32();
+        this.startBlendTime = buf.readFloat32LE();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeFloat32(this.desiredTimescale!);
-        buf.writeFloat32(this.durationRealTimeSeconds!);
+    write(buf: SourceBuffer) {
+        buf.writeFloat32LE(this.desiredTimescale!);
+        buf.writeFloat32LE(this.durationRealTimeSeconds!);
         buf.writeUint8(this.interpolationType!);
-        buf.writeFloat32(this.startBlendTime!);
+        buf.writeFloat32LE(this.startBlendTime!);
     }
 }
 export enum PortalCreditsType {
@@ -518,51 +514,51 @@ export enum PortalCreditsType {
 }
 export class CreditsPortalMsg extends UserMessage {
     creditsType?: PortalCreditsType;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.creditsType = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.creditsType!);
     }
 }
 // NOTE: Unused
 export class InventoryFlash extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 // NOTE: Unused
 export class IndicatorFlash extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 // NOTE: Unused
 export class ControlHelperAnimate extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 // NOTE: Unused
 export class TakePhoto extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 // NOTE: Unused
 export class Flash extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 export class HudPingIndicator extends UserMessage {
     position?: Vector;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.position = buf.readVector();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeVector(this.position!);
     }
 }
 // NOTE: Unused
 export class OpenRadialMenu extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 // TODO
 export class AddLocator extends UserMessage {
@@ -572,31 +568,31 @@ export class AddLocator extends UserMessage {
     position?: Vector;
     normal?: Vector;
     iconName?: string;
-    read(_buf: SourceDemoBuffer) {
+    read(_buf: SourceBuffer) {
         // this.playerIndex = buf.readUint16();
-        // this.entityHandle = buf.readUint32();
-        // this.displayTime = buf.readFloat32();
+        // this.entityHandle = buf.readUint32LE();
+        // this.displayTime = buf.readFloat32LE();
         // this.position = buf.readVectorCoord();
         // this.normal = buf.readVector();
-        // this.iconName = buf.readASCIIString();
+        // this.iconName = buf.readCString();
     }
-    write(_buf: SourceDemoBuffer) {
+    write(_buf: SourceBuffer) {
         // buf.writeUint16(this.playerIndex!);
-        // buf.writeUint32(this.entityHandle!);
-        // buf.writeFloat32(this.displayTime!);
+        // buf.writeUint32LE(this.entityHandle!);
+        // buf.writeFloat32LE(this.displayTime!);
         // buf.writeVectorCoord(this.position!);
         // buf.writeVector(this.normal!);
-        // buf.writeASCIIString(this.iconName!);
+        // buf.writeCString(this.iconName!);
     }
 }
 export class MPMapCompleted extends UserMessage {
     branch?: number;
     level?: number;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.branch = buf.readUint8();
         this.level = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.branch!);
         buf.writeUint8(this.level!);
     }
@@ -604,11 +600,11 @@ export class MPMapCompleted extends UserMessage {
 export class MPMapIncomplete extends UserMessage {
     branch?: number;
     level?: number;
-    read(buf: SourceDemoBuffer) {
+    read(buf: SourceBuffer) {
         this.branch = buf.readUint8();
         this.level = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    write(buf: SourceBuffer) {
         buf.writeUint8(this.branch!);
         buf.writeUint8(this.level!);
     }
@@ -616,11 +612,11 @@ export class MPMapIncomplete extends UserMessage {
 // TODO
 export class MPMapCompletedData extends UserMessage {
     levelCompletions?: boolean[][][];
-    read(_buf: SourceDemoBuffer) {
+    read(_buf: SourceBuffer) {
         // const MAX_PORTAL2_COOP_BRANCHES = 6;
         // const MAX_PORTAL2_COOP_LEVELS_PER_BRANCH = 16;
         // const numBits = 2 * MAX_PORTAL2_COOP_BRANCHES * MAX_PORTAL2_COOP_LEVELS_PER_BRANCH;
-        // const buffer = buf.readArrayBuffer(numBits / 8);
+        // const buffer = buf.readArray(numBits / 8);
 
         // let current = 0;
         // let mask = 0x01;
@@ -648,7 +644,7 @@ export class MPMapCompletedData extends UserMessage {
         //     }
         // }
     }
-    write(_buf: SourceDemoBuffer) {
+    write(_buf: SourceBuffer) {
         // const MAX_PORTAL2_COOP_BRANCHES = 6;
         // const MAX_PORTAL2_COOP_LEVELS_PER_BRANCH = 16;
         // const numBits = 2 * MAX_PORTAL2_COOP_BRANCHES * MAX_PORTAL2_COOP_LEVELS_PER_BRANCH;
@@ -679,42 +675,42 @@ export class MPMapCompletedData extends UserMessage {
         //     }
         // }
 
-        // buf.writeArrayBuffer(buffer, buffer.byteLength);
+        // buf.writeArray(buffer, buffer.byteLength);
     }
 }
 export class MPTauntEarned extends UserMessage {
     taunt?: string;
     awardSilently?: boolean;
-    read(buf: SourceDemoBuffer) {
-        this.taunt = buf.readASCIIString();
+    read(buf: SourceBuffer) {
+        this.taunt = buf.readCString();
         this.awardSilently = buf.readBoolean();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeASCIIString(this.taunt!);
+    write(buf: SourceBuffer) {
+        buf.writeCString(this.taunt!);
         buf.writeBoolean(this.awardSilently!);
     }
 }
 export class MPTauntUnlocked extends UserMessage {
     taunt?: string;
-    read(buf: SourceDemoBuffer) {
-        this.taunt = buf.readASCIIString();
+    read(buf: SourceBuffer) {
+        this.taunt = buf.readCString();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeASCIIString(this.taunt!);
+    write(buf: SourceBuffer) {
+        buf.writeCString(this.taunt!);
     }
 }
 export class MPTauntLocked extends UserMessage {
     taunt?: string;
-    read(buf: SourceDemoBuffer) {
-        this.taunt = buf.readASCIIString();
+    read(buf: SourceBuffer) {
+        this.taunt = buf.readCString();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeASCIIString(this.taunt!);
+    write(buf: SourceBuffer) {
+        buf.writeCString(this.taunt!);
     }
 }
 export class MPAllTauntsLocked extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 export enum PortalFizzleType {
     Success = 0,
@@ -738,18 +734,18 @@ export class PortalFX_Surface extends UserMessage {
     effect?: PortalFizzleType;
     vecOrigin?: Vector;
     angles?: QAngle;
-    read(_buf: SourceDemoBuffer) {
-        // this.entIndex = buf.readInt16();
-        // this.playerEntIndex = buf.readInt16();
+    read(_buf: SourceBuffer) {
+        // this.entIndex = buf.readInt16LE();
+        // this.playerEntIndex = buf.readInt16LE();
         // this.team = buf.readInt8();
         // this.portalNum = buf.readInt8();
         // this.effect = buf.readInt8();
         // this.vecOrigin = buf.readVectorCoord();
         // this.angles = buf.readAngles();
     }
-    write(_buf: SourceDemoBuffer) {
-        // buf.writeInt16(this.entIndex!);
-        // buf.writeInt16(this.playerEntIndex!);
+    write(_buf: SourceBuffer) {
+        // buf.writeInt16LE(this.entIndex!);
+        // buf.writeInt16LE(this.playerEntIndex!);
         // buf.writeInt8(this.team!);
         // buf.writeInt8(this.portalNum!);
         // buf.writeInt8(this.effect!);
@@ -764,18 +760,18 @@ export class PaintWorld extends UserMessage {
     unk3?: number;
     unk4?: number;
     unk5?: number;
-    read(_buf: SourceDemoBuffer) {
+    read(_buf: SourceBuffer) {
         // this.unk1 = buf.readUint8();
-        // this.unk2 = buf.readUint32();
-        // this.unk3 = buf.readFloat32();
-        // this.unk4 = buf.readFloat32();
+        // this.unk2 = buf.readUint32LE();
+        // this.unk3 = buf.readFloat32LE();
+        // this.unk4 = buf.readFloat32LE();
         // this.unk5 = buf.readUint8();
     }
-    write(_buf: SourceDemoBuffer) {
+    write(_buf: SourceBuffer) {
         // buf.writeUint8(this.unk1!);
-        // buf.writeUint32(this.unk2!);
-        // buf.writeFloat32(this.unk3!);
-        // buf.writeFloat32(this.unk4!);
+        // buf.writeUint32LE(this.unk2!);
+        // buf.writeFloat32LE(this.unk3!);
+        // buf.writeFloat32LE(this.unk4!);
         // buf.writeUint8(this.unk5!);
     }
 }
@@ -786,60 +782,60 @@ export class PaintEntity extends UserMessage {
     unk3?: number;
     unk4?: number;
     unk5?: number;
-    read(_buf: SourceDemoBuffer) {
-        // this.unk1 = buf.readUint32();
+    read(_buf: SourceBuffer) {
+        // this.unk1 = buf.readUint32LE();
         // this.unk2 = buf.readUint8();
-        // this.unk3 = buf.readFloat32();
-        // this.unk4 = buf.readFloat32();
-        // this.unk5 = buf.readFloat32();
+        // this.unk3 = buf.readFloat32LE();
+        // this.unk4 = buf.readFloat32LE();
+        // this.unk5 = buf.readFloat32LE();
     }
-    write(_buf: SourceDemoBuffer) {
-        // buf.writeUint32(this.unk1!);
+    write(_buf: SourceBuffer) {
+        // buf.writeUint32LE(this.unk1!);
         // buf.writeUint8(this.unk2!);
-        // buf.writeFloat32(this.unk3!);
-        // buf.writeFloat32(this.unk4!);
-        // buf.writeFloat32(this.unk5!);
+        // buf.writeFloat32LE(this.unk3!);
+        // buf.writeFloat32LE(this.unk4!);
+        // buf.writeFloat32LE(this.unk5!);
     }
 }
 // TODO
 export class ChangePaintColor extends UserMessage {
     unk1?: number;
     unk2?: number;
-    read(_buf: SourceDemoBuffer) {
-        // this.unk1 = buf.readUint32();
+    read(_buf: SourceBuffer) {
+        // this.unk1 = buf.readUint32LE();
         // this.unk2 = buf.readUint8();
     }
-    write(_buf: SourceDemoBuffer) {
-        // buf.writeUint32(this.unk1!);
+    write(_buf: SourceBuffer) {
+        // buf.writeUint32LE(this.unk1!);
         // buf.writeUint8(this.unk2!);
     }
 }
 // NOTE: Unused
 export class PaintBombExplode extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 export class RemoveAllPaint extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 // NOTE: Unused
 export class PaintAllSurfaces extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 export class RemovePaint extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 // NOTE: Unused
 export class StartSurvey extends UserMessage {
     handle?: number;
-    read(buf: SourceDemoBuffer) {
-        this.handle = buf.readUint32();
+    read(buf: SourceBuffer) {
+        this.handle = buf.readUint32LE();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeUint32(this.handle!);
+    write(buf: SourceBuffer) {
+        buf.writeUint32LE(this.handle!);
     }
 }
 // TODO
@@ -847,13 +843,13 @@ export class ApplyHitBoxDamageEffect extends UserMessage {
     entityHandle?: number;
     effectIndex?: number;
     hits?: number;
-    read(_buf: SourceDemoBuffer) {
-        // this.entityHandle = buf.readUint32();
+    read(_buf: SourceBuffer) {
+        // this.entityHandle = buf.readUint32LE();
         // this.effectIndex = buf.readUint8();
         // this.hits = buf.readUint8();
     }
-    write(_buf: SourceDemoBuffer) {
-        // buf.writeUint32(this.entityHandle!);
+    write(_buf: SourceBuffer) {
+        // buf.writeUint32LE(this.entityHandle!);
         // buf.writeUint8(this.effectIndex!);
         // buf.writeUint8(this.hits!);
     }
@@ -862,45 +858,45 @@ export class SetMixLayerTriggerFactor extends UserMessage {
     layer?: string;
     group?: string;
     factor?: number;
-    read(buf: SourceDemoBuffer) {
-        this.layer = buf.readASCIIString();
-        this.group = buf.readASCIIString();
-        this.factor = buf.readFloat32();
+    read(buf: SourceBuffer) {
+        this.layer = buf.readCString();
+        this.group = buf.readCString();
+        this.factor = buf.readFloat32LE();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeASCIIString(this.layer!);
-        buf.writeASCIIString(this.group!);
-        buf.writeFloat32(this.factor!);
+    write(buf: SourceBuffer) {
+        buf.writeCString(this.layer!);
+        buf.writeCString(this.group!);
+        buf.writeFloat32LE(this.factor!);
     }
 }
 export class TransitionFade extends UserMessage {
     fade?: number;
-    read(buf: SourceDemoBuffer) {
-        this.fade = buf.readFloat32();
+    read(buf: SourceBuffer) {
+        this.fade = buf.readFloat32LE();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeFloat32(this.fade!);
+    write(buf: SourceBuffer) {
+        buf.writeFloat32LE(this.fade!);
     }
 }
 export class ScoreboardTempUpdate extends UserMessage {
     portalScore?: number;
     timeScore?: number;
-    read(buf: SourceDemoBuffer) {
-        this.portalScore = buf.readUint32();
-        this.timeScore = buf.readUint32();
+    read(buf: SourceBuffer) {
+        this.portalScore = buf.readUint32LE();
+        this.timeScore = buf.readUint32LE();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeUint32(this.portalScore!);
-        buf.writeUint32(this.timeScore!);
+    write(buf: SourceBuffer) {
+        buf.writeUint32LE(this.portalScore!);
+        buf.writeUint32LE(this.timeScore!);
     }
 }
 export class ChallengeModeCheatSession extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 export class ChallengeModeCloseAllUI extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    read(_buf: SourceBuffer) {}
+    write(_buf: SourceBuffer) {}
 }
 
 export const UserMessages = {

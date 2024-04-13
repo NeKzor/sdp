@@ -1,5 +1,53 @@
 {
-  "version": "2",
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@std/assert": "jsr:@std/assert@0.222.1",
+      "jsr:@std/assert@^0.222.1": "jsr:@std/assert@0.222.1",
+      "jsr:@std/fmt@^0.222.1": "jsr:@std/fmt@0.222.1",
+      "jsr:@std/path": "jsr:@std/path@0.222.1",
+      "jsr:@std/testing": "jsr:@std/testing@0.222.1",
+      "jsr:@std/testing@0.222.0": "jsr:@std/testing@0.222.0",
+      "npm:@nekz/sdp": "npm:@nekz/sdp@0.3.0",
+      "npm:@types/node": "npm:@types/node@18.11.18"
+    },
+    "jsr": {
+      "@std/assert@0.222.1": {
+        "integrity": "691637161ee584a9919d1f9950ddd1272feb8e0a19e83aa5b7563cedaf73d74c",
+        "dependencies": [
+          "jsr:@std/fmt@^0.222.1"
+        ]
+      },
+      "@std/fmt@0.222.1": {
+        "integrity": "ec3382f9b0261c1ab1a5c804aa355d816515fa984cdd827ed32edfb187c0a722"
+      },
+      "@std/path@0.222.1": {
+        "integrity": "aad3e9463ca53b0adb25b4d5beb330025674aaa3278da24c1c261d9289a9e48b",
+        "dependencies": [
+          "jsr:@std/assert@^0.222.1"
+        ]
+      },
+      "@std/testing@0.222.0": {
+        "integrity": "a6d10c9fbb1df052ad7f73174d511328c08b7408bdd162ef6c3bc04def49c2ae"
+      },
+      "@std/testing@0.222.1": {
+        "integrity": "7be5c3ef185d31883116824a2dd604eb6f12a56fd5ed80489c7c696b2a76c5bc",
+        "dependencies": [
+          "jsr:@std/assert@^0.222.1"
+        ]
+      }
+    },
+    "npm": {
+      "@nekz/sdp@0.3.0": {
+        "integrity": "sha512-4vffmc60cA1o6SHMM65c5JXgsaFV99yDMJldufetl/bBb2BjZk1kHj4VqbfKlCrsL66YLhS5oXrJUvMgPgutAg==",
+        "dependencies": {}
+      },
+      "@types/node@18.11.18": {
+        "integrity": "sha512-DHQpWGjyQKSHj3ebjFI/wRKcqQcdR+MoFBygntYOZytCqNfkd2ZC4ARDJ2DQqhjH5p85Nnd3jhUJIXrszFX/JA==",
+        "dependencies": {}
+      }
+    }
+  },
   "remote": {
     "https://deno.land/std@0.140.0/_util/assert.ts": "e94f2eb37cebd7f199952e242c77654e43333c1ac4c5c700e929ea3aa5489f74",
     "https://deno.land/std@0.140.0/_util/os.ts": "3b4c6e27febd119d36a416d7a97bd3b0251b77c88942c8f16ee5953ea13e2e49",
@@ -124,6 +172,12 @@
     "https://deno.land/std@0.191.0/testing/_test_suite.ts": "30f018feeb3835f12ab198d8a518f9089b1bcb2e8c838a8b615ab10d5005465c",
     "https://deno.land/std@0.191.0/testing/asserts.ts": "e16d98b4d73ffc4ed498d717307a12500ae4f2cbe668f1a215632d19fcffc22f",
     "https://deno.land/std@0.191.0/testing/bdd.ts": "59f7f7503066d66a12e50ace81bfffae5b735b6be1208f5684b630ae6b4de1d0",
+    "https://deno.land/std@0.221.0/testing/_test_suite.ts": "f10a8a6338b60c403f07a76f3f46bdc9f1e1a820c0a1decddeb2949f7a8a0546",
+    "https://deno.land/std@0.221.0/testing/bdd.ts": "7a8ac58eded80e6fefa7cf7538927e88781cf5f247c04b35261c3213316e2dd0",
+    "https://deno.land/std@0.222.0/testing/_test_suite.ts": "f10a8a6338b60c403f07a76f3f46bdc9f1e1a820c0a1decddeb2949f7a8a0546",
+    "https://deno.land/std@0.222.0/testing/bdd.ts": "3e4de4ff6d8f348b5574661cef9501b442046a59079e201b849d0e74120d476b",
+    "https://deno.land/std@0.222.1/testing/_test_suite.ts": "f10a8a6338b60c403f07a76f3f46bdc9f1e1a820c0a1decddeb2949f7a8a0546",
+    "https://deno.land/std@0.222.1/testing/bdd.ts": "3e4de4ff6d8f348b5574661cef9501b442046a59079e201b849d0e74120d476b",
     "https://deno.land/x/code_block_writer@12.0.0/mod.ts": "2c3448060e47c9d08604c8f40dee34343f553f33edcdfebbf648442be33205e5",
     "https://deno.land/x/code_block_writer@12.0.0/utils/string_utils.ts": "60cb4ec8bd335bf241ef785ccec51e809d576ff8e8d29da43d2273b69ce2a6ff",
     "https://deno.land/x/deno_cache@0.4.1/auth_tokens.ts": "5fee7e9155e78cedf3f6ff3efacffdb76ac1a76c86978658d9066d4fb0f7326e",
@@ -193,21 +247,5 @@
     "https://deno.land/x/wasmbuild@0.13.0/loader.ts": "d98d195a715f823151cbc8baa3f32127337628379a02d9eb2a3c5902dbccfc02",
     "https://deno.land/x/wasmbuild@0.14.1/cache.ts": "89eea5f3ce6035a1164b3e655c95f21300498920575ade23161421f5b01967f4",
     "https://deno.land/x/wasmbuild@0.14.1/loader.ts": "d98d195a715f823151cbc8baa3f32127337628379a02d9eb2a3c5902dbccfc02"
-  },
-  "npm": {
-    "specifiers": {
-      "@nekz/sdp": "@nekz/sdp@0.3.0",
-      "@types/node": "@types/node@18.11.18"
-    },
-    "packages": {
-      "@nekz/sdp@0.3.0": {
-        "integrity": "sha512-4vffmc60cA1o6SHMM65c5JXgsaFV99yDMJldufetl/bBb2BjZk1kHj4VqbfKlCrsL66YLhS5oXrJUvMgPgutAg==",
-        "dependencies": {}
-      },
-      "@types/node@18.11.18": {
-        "integrity": "sha512-DHQpWGjyQKSHj3ebjFI/wRKcqQcdR+MoFBygntYOZytCqNfkd2ZC4ARDJ2DQqhjH5p85Nnd3jhUJIXrszFX/JA==",
-        "dependencies": {}
-      }
-    }
   }
 }

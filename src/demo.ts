@@ -126,17 +126,7 @@ export class SourceDemo {
         return this;
     }
     writeMessages(buf: SourceBuffer) {
-        this.messages.forEach((message) => {
-            buf.writeInt8(message.type);
-            buf.writeInt32LE(message.tick);
-
-            if (message.slot !== undefined) {
-                buf.writeInt8(message.slot);
-            }
-
-            message.write(buf);
-        });
-
+        this.messages.forEach((message) => message.write(buf.writeInt8(message.type)));
         return this;
     }
     readUserCmds() {

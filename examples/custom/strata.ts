@@ -1,4 +1,4 @@
-import { Messages, SourceDemo, SourceDemoBuffer, SourceDemoParser } from '../../src/mod.ts';
+import { DemoMessages, SourceBuffer, SourceDemo, SourceDemoParser } from '../../src/mod.ts';
 import { DataTable, Packet } from '../../src/messages.ts';
 import { ServerClassInfo } from '../../src/types/DataTables.ts';
 import * as nm from './p2ce/netmessages.ts';
@@ -131,17 +131,17 @@ export const p2ceUserMessages = {
 
 export class StrataSourceDemo extends SourceDemo {
     override readPackets() {
-        for (const message of this.messages ?? []) {
-            if (message instanceof Packet) {
+        for (const message of this.messages) {
+            if (Packet.matches(message)) {
                 const packets: any[] = [];
-                const data = SourceDemoBuffer.from(message.data!);
+                const data = message.data.clone();
 
                 while (data.bitsLeft >= 16) {
                     const cmd = data.readVarInt32();
                     const size = data.readVarInt32();
 
                     const message = (p2ceNetMessages as any)[cmd];
-                    const packet = message.decode(new Uint8Array(data.readArrayBuffer(size)));
+                    const packet = message.decode(data.readArray(size));
                     packets.push(packet);
 
                     //console.log(nETMessagesToJSON(cmd)  ?? sVCMessagesToJSON(cmd));
@@ -153,7 +153,8 @@ export class StrataSourceDemo extends SourceDemo {
                 }
 
                 if (data.bitsLeft) {
-                    message.restData = data.readBitStream(data.bitsLeft);
+                    // TODO
+                    //message.restData = data.readBuffer(data.bitsLeft);
                 }
 
                 message.packets = packets;
@@ -163,32 +164,32 @@ export class StrataSourceDemo extends SourceDemo {
         return this;
     }
     override readDataTables() {
-        for (const message of this.messages ?? []) {
-            if (message instanceof DataTable) {
+        for (const message of this.messages) {
+            if (DataTable.matches(message)) {
                 const dataTable: {
                     tables: any[];
                     serverClasses: ServerClassInfo[];
-                    restData: SourceDemoBuffer | undefined;
+                    restData: SourceBuffer | undefined;
                 } = {
                     tables: [],
                     serverClasses: [],
                     restData: undefined,
                 };
 
-                const data = SourceDemoBuffer.from(message.data!);
+                const data = message.data.clone();
 
                 while (data.bitsLeft) {
                     const type = data.readVarInt32();
                     const size = data.readVarInt32();
                     const descriptor = p2ceNetMessages[type as keyof typeof p2ceNetMessages];
-                    const msg = descriptor.decode(new Uint8Array(data.readArrayBuffer(size))) as nm.CSVCMsgSendTable;
+                    const msg = descriptor.decode(data.readArray(size)) as nm.CSVCMsgSendTable;
                     dataTable.tables.push(msg);
                     if (msg.isEnd) {
                         break;
                     }
                 }
 
-                let classes = data.readInt16() ?? 0;
+                let classes = data.readInt16LE() ?? 0;
                 while (classes--) {
                     const sc = new ServerClassInfo();
                     sc.read(data);
@@ -197,7 +198,7 @@ export class StrataSourceDemo extends SourceDemo {
                 }
 
                 if (data.bitsLeft) {
-                    dataTable.restData = data.readBitStream(data.bitsLeft);
+                    dataTable.restData = data.readBuffer(data.bitsLeft);
                 }
 
                 message.dataTable = dataTable;
@@ -244,7 +245,7 @@ demo.readPackets();
 demo.readStringTables();
 
 console.dir(
-    demo.findMessage<Messages.StringTable>((packet) => packet.getName() === 'StringTable')
+    demo.findMessage(DemoMessages.StringTable)
         ?.stringTables
         ?.find((x) => x.name === 'instancebaseline'),
 );

@@ -1,228 +1,459 @@
 // Copyright (c) 2018-2024, NeKz
 // SPDX-License-Identifier: MIT
 
-import type { SourceDemoBuffer } from './buffer.ts';
-import type { SourceDemo } from './demo.ts';
+import type { SourceBuffer } from './buffer.ts';
 import { CmdInfo } from './types/CmdInfo.ts';
 import type { SendTable, ServerClassInfo } from './types/DataTables.ts';
-import { NetMessage } from './types/NetMessages.ts';
+import type { NetMessage } from './types/NetMessages.ts';
 import type { StringTable as StringTableType } from './types/StringTables.ts';
 import type { UserCmd as UserCmdType } from './types/UserCmd.ts';
 
-export class Message {
+export interface IMessage {
     type: number;
-    tick?: number;
-    slot?: number;
-    constructor(type: number) {
-        this.type = type;
-    }
-    static default(type: number): Message {
-        return new this(type);
-    }
-    getType(): number | undefined {
-        return this.type;
-    }
-    getName(): string {
-        return this.constructor.name;
-    }
-    getTick(): number | undefined {
-        return this.tick;
-    }
-    getSlot(): number | undefined {
-        return this.slot;
-    }
-    setTick(tick: number): this {
-        this.tick = tick;
-        return this;
-    }
-    setSlot(slot: number): this {
-        this.slot = slot;
-        return this;
-    }
-    read(_buf: SourceDemoBuffer, _demo: SourceDemo): Message {
-        throw new Error(`read() for ${this.constructor.name} not implemented!`);
-    }
-    write(_buf: SourceDemoBuffer, _demo: SourceDemo): Message {
-        throw new Error(`write() for ${this.constructor.name} not implemented!`);
-    }
+    tick: number;
+    slot: number;
+
+    write(buf: SourceBuffer): void;
 }
 
-export class Packet extends Message {
-    packets?: NetMessage[];
-    cmdInfo?: CmdInfo[];
-    inSequence?: number;
-    outSequence?: number;
-    data?: SourceDemoBuffer;
-    restData?: SourceDemoBuffer;
-    constructor(type: number) {
-        super(type);
-    }
-    findPacket<T extends NetMessage>(
-        type: (new (type: number) => T) | ((packet: NetMessage) => boolean),
-    ): T | undefined {
-        const byType = type instanceof NetMessage
-            ? (packet: NetMessage) => packet instanceof type
-            : (packet: NetMessage) => (type as unknown as (packet: NetMessage) => boolean)(packet);
+export type Message =
+    | typeof SignOn
+    | typeof Packet
+    | typeof SyncTick
+    | typeof ConsoleCmd
+    | typeof UserCmd
+    | typeof DataTable
+    | typeof Stop
+    | typeof CustomData
+    | typeof StringTable;
 
-        return (this.packets ?? []).find(byType) as T | undefined;
-    }
-    findPackets<T extends NetMessage>(type: (new (type: number) => T) | ((packet: NetMessage) => boolean)): T[] {
-        const byType = type instanceof NetMessage
-            ? (packet: NetMessage) => packet instanceof type
-            : (packet: NetMessage) => (type as unknown as (packet: NetMessage) => boolean)(packet);
+export interface IPacket extends IMessage {
+    cmdInfo: CmdInfo[];
+    inSequence: number;
+    outSequence: number;
+    data: SourceBuffer;
+    packets: NetMessage[];
+}
 
-        return (this.packets ?? []).filter(byType) as T[];
-    }
-    override read(buf: SourceDemoBuffer, demo: SourceDemo): Packet {
-        let mssc = demo.demoProtocol === 4 ? 2 : 1;
+export class Packet implements IPacket {
+    static TYPE = 0x02;
 
-        this.cmdInfo = [];
-        while (mssc--) {
+    type = Packet.TYPE;
+    tick!: number;
+    slot!: number;
+    cmdInfo!: CmdInfo[];
+    inSequence!: number;
+    outSequence!: number;
+    data!: SourceBuffer;
+    packets: NetMessage[] = [];
+
+    protected constructor() {
+    }
+
+    write(buf: SourceBuffer): void {
+        Packet.serialize(buf, this);
+    }
+
+    static create(packet: Omit<IPacket, 'type' | 'write'>): Packet {
+        return Object.assign(new this(), packet);
+    }
+    static deserialize(buf: SourceBuffer): Packet {
+        const msg = new this();
+        msg.tick = buf.readInt32LE();
+        msg.slot = buf.readUint8();
+
+        msg.cmdInfo = [];
+        for (let mssc = 2; mssc > 0; --mssc) {
             const cmd = new CmdInfo();
             cmd.read(buf);
-            this.cmdInfo.push(cmd);
+            msg.cmdInfo.push(cmd);
         }
 
-        this.inSequence = buf.readInt32();
-        this.outSequence = buf.readInt32();
-        this.data = buf.readBitStream(buf.readInt32() * 8);
-        return this;
+        msg.inSequence = buf.readInt32LE();
+        msg.outSequence = buf.readInt32LE();
+        msg.data = buf.readBuffer(buf.readInt32LE());
+        return msg;
     }
-    override write(buf: SourceDemoBuffer): Packet {
-        this.cmdInfo!.forEach((cmd) => cmd.write(buf));
-        buf.writeInt32(this.inSequence!);
-        buf.writeInt32(this.outSequence!);
-        buf.writeInt32(this.data!.length / 8);
-        buf.writeBitStream(this.data!, this.data!.length);
-        return this;
+    static serialize(buf: SourceBuffer, packet: IPacket): void {
+        buf.writeInt32LE(packet.tick);
+        buf.writeUint8(packet.slot);
+        packet.cmdInfo.forEach((cmd) => cmd.write(buf));
+        buf.writeInt32LE(packet.inSequence);
+        buf.writeInt32LE(packet.outSequence);
+        buf.writeInt32LE(packet.data.buffer.byteLength);
+        buf.writeBuffer(packet.data);
     }
-    *[Symbol.iterator](): Generator<NetMessage> {
-        for (const packet of this.packets ?? []) {
-            yield packet;
-        }
+
+    static matches(msg: IMessage): msg is Packet {
+        return msg.type === Packet.TYPE;
     }
-}
-export class SignOn extends Packet {}
-export class SyncTick extends Message {
-    override read(): SyncTick {
-        return this;
+    and(predicate: (msg: Packet) => boolean | undefined): boolean | undefined {
+        return predicate(this);
     }
-    override write(): SyncTick {
-        return this;
+    inner(
+        predicate: (frame: NetMessage[]) => boolean | undefined,
+    ): boolean | undefined {
+        return this.packets && predicate(this.packets);
     }
-}
-export class ConsoleCmd extends Message {
-    command?: string;
-    override read(buf: SourceDemoBuffer): ConsoleCmd {
-        this.command = buf.readASCIIString(buf.readInt32());
-        return this;
-    }
-    override write(buf: SourceDemoBuffer): ConsoleCmd {
-        buf.writeInt32(this.command!.length + 1);
-        buf.writeASCIIString(this.command!, this.command!.length + 1);
-        return this;
+    innerUnsafe(
+        predicate: (frame: NetMessage[]) => boolean | undefined,
+    ): boolean | undefined {
+        return predicate(this.packets!);
     }
 }
-export class UserCmd extends Message {
-    cmd?: number;
-    data?: SourceDemoBuffer;
+export interface ISignOn extends IPacket {}
+export class SignOn extends Packet {
+    static override TYPE = 0x01;
+
+    override type = SignOn.TYPE;
+
+    static override create(signOn: ISignOn): SignOn {
+        return Object.assign(new this(), signOn);
+    }
+    static override serialize(buf: SourceBuffer, signOn: ISignOn): void {
+        Packet.serialize(buf, signOn);
+    }
+    static override matches(msg: IMessage): msg is SignOn {
+        return msg.type === SignOn.TYPE;
+    }
+    override and(predicate: (msg: SignOn) => boolean | undefined): boolean | undefined {
+        return predicate(this);
+    }
+}
+export interface ISyncTick extends IMessage {}
+export class SyncTick implements ISyncTick {
+    static TYPE = 0x03;
+
+    type = SyncTick.TYPE;
+    tick!: number;
+    slot!: number;
+
+    protected constructor() {
+    }
+
+    write(buf: SourceBuffer): void {
+        SyncTick.serialize(buf, this);
+    }
+
+    static create(syncTick: Omit<ISyncTick, 'type' | 'write'>): SyncTick {
+        return Object.assign(new this(), syncTick);
+    }
+    static deserialize(buf: SourceBuffer): SyncTick {
+        const msg = new this();
+        msg.tick = buf.readInt32LE();
+        msg.slot = buf.readUint8();
+        return msg;
+    }
+    static serialize(_buf: SourceBuffer, _syncTick: ISyncTick) {
+    }
+
+    static matches(msg: IMessage): msg is SyncTick {
+        return msg.type === SyncTick.TYPE;
+    }
+    and(predicate: (msg: SyncTick) => boolean | undefined): boolean | undefined {
+        return predicate(this);
+    }
+}
+export interface IConsoleCmd extends IMessage {
+    command: string;
+}
+export class ConsoleCmd implements IConsoleCmd {
+    static TYPE = 0x04;
+
+    type = ConsoleCmd.TYPE;
+    command!: string;
+    tick!: number;
+    slot!: number;
+
+    protected constructor() {
+    }
+
+    write(buf: SourceBuffer): void {
+        ConsoleCmd.serialize(buf, this);
+    }
+
+    static create(cmd: Omit<IConsoleCmd, 'type' | 'write'>): ConsoleCmd {
+        return Object.assign(new this(), cmd);
+    }
+    static deserialize(buf: SourceBuffer): ConsoleCmd {
+        const msg = new this();
+        msg.tick = buf.readInt32LE();
+        msg.slot = buf.readUint8();
+        msg.command = buf.readStringBuffer(buf.readInt32LE());
+        return msg;
+    }
+    static serialize(buf: SourceBuffer, cmd: IConsoleCmd): void {
+        buf.writeInt32LE(cmd.tick);
+        buf.writeUint8(cmd.slot);
+        buf.writeInt32LE(cmd.command.length + 1);
+        buf.writeCString(cmd.command);
+    }
+
+    static matches(msg: IMessage): msg is ConsoleCmd {
+        return msg.type === ConsoleCmd.TYPE;
+    }
+    and(predicate: (msg: ConsoleCmd) => boolean | undefined): boolean | undefined {
+        return predicate(this);
+    }
+}
+export interface IUserCmd extends IMessage {
+    cmd: number;
+    data: SourceBuffer;
     userCmd?: UserCmdType;
-    restData?: SourceDemoBuffer;
-    override read(buf: SourceDemoBuffer): UserCmd {
-        this.cmd = buf.readInt32();
-        this.data = buf.readBitStream(buf.readInt32() * 8);
-        return this;
+}
+export class UserCmd implements IUserCmd {
+    static TYPE = 0x05;
+
+    type = UserCmd.TYPE;
+    cmd!: number;
+    data!: SourceBuffer;
+    userCmd?: UserCmdType | undefined;
+    tick!: number;
+    slot!: number;
+
+    protected constructor() {
     }
-    override write(buf: SourceDemoBuffer): UserCmd {
-        buf.writeInt32(this.cmd!);
-        buf.writeInt32(this.data!.length / 8);
-        buf.writeBitStream(this.data!, this.data!.length);
-        return this;
+
+    write(buf: SourceBuffer): void {
+        UserCmd.serialize(buf, this);
+    }
+
+    static create(userCmd: Omit<IUserCmd, 'type' | 'write'>): UserCmd {
+        return Object.assign(new this(), userCmd);
+    }
+    static deserialize(buf: SourceBuffer): UserCmd {
+        const msg = new this();
+        msg.tick = buf.readInt32LE();
+        msg.slot = buf.readUint8();
+        msg.cmd = buf.readInt32LE();
+        msg.data = buf.readBuffer(buf.readInt32LE());
+        return msg;
+    }
+    static serialize(buf: SourceBuffer, userCmd: IUserCmd): void {
+        buf.writeInt32LE(userCmd.tick);
+        buf.writeUint8(userCmd.slot);
+        buf.writeInt32LE(userCmd.cmd);
+        buf.writeInt32LE(userCmd.data.buffer.byteLength);
+        buf.writeBuffer(userCmd.data);
+    }
+
+    static matches(msg: IMessage): msg is UserCmd {
+        return msg.type === UserCmd.TYPE;
+    }
+    and(predicate: (msg: UserCmd) => boolean | undefined): boolean | undefined {
+        return predicate(this);
+    }
+    inner(
+        predicate: (frame: UserCmdType) => boolean | undefined,
+    ): boolean | undefined {
+        return this.userCmd && predicate(this.userCmd);
+    }
+    innerUnsafe(
+        predicate: (frame: UserCmdType) => boolean | undefined,
+    ): boolean | undefined {
+        return predicate(this.userCmd!);
     }
 }
-export class DataTable extends Message {
-    data?: SourceDemoBuffer;
+export interface IDataTable extends IMessage {
+    data: SourceBuffer;
     dataTable?: {
         tables: SendTable[];
         serverClasses: ServerClassInfo[];
-        restData?: SourceDemoBuffer;
     };
-    override read(buf: SourceDemoBuffer): DataTable {
-        this.data = buf.readBitStream(buf.readInt32() * 8);
-        return this;
+}
+export class DataTable implements IDataTable {
+    static TYPE = 0x06;
+
+    type = DataTable.TYPE;
+    tick!: number;
+    slot!: number;
+    data!: SourceBuffer;
+    dataTable?: { tables: SendTable[]; serverClasses: ServerClassInfo[] } | undefined;
+
+    protected constructor() {
     }
-    override write(buf: SourceDemoBuffer): DataTable {
-        buf.writeInt32(this.data!.length / 8);
-        buf.writeBitStream(this.data!, this.data!.length);
-        return this;
+
+    static create(dataTable: Omit<IDataTable, 'type' | 'write'>): DataTable {
+        return Object.assign(new this(), dataTable);
+    }
+    write(buf: SourceBuffer): void {
+        DataTable.serialize(buf, this);
+    }
+
+    static deserialize(buf: SourceBuffer): DataTable {
+        const msg = new this();
+        msg.tick = buf.readInt32LE();
+        msg.slot = buf.readUint8();
+        msg.data = buf.readBuffer(buf.readInt32LE());
+        return msg;
+    }
+    static serialize(buf: SourceBuffer, dataTable: IDataTable): void {
+        buf.writeInt32LE(dataTable.tick);
+        buf.writeUint8(dataTable.slot);
+        buf.writeInt32LE(dataTable.data.buffer.byteLength);
+        buf.writeBuffer(dataTable.data);
+    }
+
+    static matches(msg: IMessage): msg is DataTable {
+        return msg.type === DataTable.TYPE;
+    }
+    and(predicate: (msg: DataTable) => boolean | undefined): boolean | undefined {
+        return predicate(this);
+    }
+    inner(
+        predicate: (frame: { tables: SendTable[]; serverClasses: ServerClassInfo[] }) => boolean | undefined,
+    ): boolean | undefined {
+        return this.dataTable && predicate(this.dataTable);
+    }
+    innerUnsafe(
+        predicate: (frame: { tables: SendTable[]; serverClasses: ServerClassInfo[] }) => boolean | undefined,
+    ): boolean | undefined {
+        return predicate(this.dataTable!);
     }
 }
-export class Stop extends Message {
-    restData?: SourceDemoBuffer;
-    override read(buf: SourceDemoBuffer): Stop {
-        this.restData = buf.readBitStream(buf.bitsLeft);
-        return this;
+export interface IStop extends IMessage {
+    restData: SourceBuffer;
+}
+export class Stop implements IStop {
+    static TYPE = 0x07;
+
+    type = Stop.TYPE;
+    tick!: number;
+    slot!: number;
+    restData!: SourceBuffer;
+
+    protected constructor() {
     }
-    override write(buf: SourceDemoBuffer): Stop {
-        buf.writeBitStream(this.restData!, this.restData!.bitsLeft);
-        return this;
+
+    write(buf: SourceBuffer): void {
+        Stop.serialize(buf, this);
+    }
+
+    static create(stop: Omit<IStop, 'type' | 'write'>): Stop {
+        return Object.assign(new this(), stop);
+    }
+    static deserialize(buf: SourceBuffer): Stop {
+        const msg = new this();
+        msg.tick = buf.readInt32LE();
+        msg.slot = buf.readUint8();
+        msg.restData = buf.readBuffer(buf.bitsLeft / 8);
+        return msg;
+    }
+    static serialize(buf: SourceBuffer, stop: IStop): void {
+        buf.writeInt32LE(stop.tick);
+        buf.writeUint8(stop.slot);
+        buf.writeBuffer(stop.restData);
+    }
+
+    static matches(msg: IMessage): msg is Stop {
+        return msg.type === Stop.TYPE;
+    }
+    and(predicate: (msg: Stop) => boolean | undefined): boolean | undefined {
+        return predicate(this);
     }
 }
-export class CustomData extends Message {
-    unk?: number;
-    data?: SourceDemoBuffer;
-    override read(buf: SourceDemoBuffer): CustomData {
-        this.unk = buf.readInt32();
-        this.data = buf.readBitStream(buf.readInt32() * 8);
-        return this;
+export interface ICustomData extends IMessage {
+    callbackIndex: number;
+    data: SourceBuffer;
+}
+export class CustomData implements ICustomData {
+    static TYPE = 0x08;
+
+    type = CustomData.TYPE;
+    tick!: number;
+    slot!: number;
+    callbackIndex!: number;
+    data!: SourceBuffer;
+
+    protected constructor() {
     }
-    override write(buf: SourceDemoBuffer): CustomData {
-        buf.writeInt32(this.unk!);
-        buf.writeInt32(this.data!.length / 8);
-        buf.writeBitStream(this.data!, this.data!.length);
-        return this;
+
+    write(buf: SourceBuffer): void {
+        CustomData.serialize(buf, this);
+    }
+
+    static create(customData: Omit<ICustomData, 'type' | 'write'>): CustomData {
+        return Object.assign(new this(), customData);
+    }
+    static deserialize(buf: SourceBuffer): CustomData {
+        const msg = new this();
+        msg.tick = buf.readInt32LE();
+        msg.slot = buf.readUint8();
+        msg.callbackIndex = buf.readInt32LE();
+        msg.data = buf.readBuffer(buf.readInt32LE());
+        return msg;
+    }
+    static serialize(buf: SourceBuffer, customData: ICustomData): void {
+        buf.writeInt32LE(customData.tick);
+        buf.writeUint8(customData.slot);
+        buf.writeInt32LE(customData.callbackIndex);
+        buf.writeInt32LE(customData.data.buffer.byteLength);
+        buf.writeBuffer(customData.data);
+    }
+
+    static matches(msg: IMessage): msg is CustomData {
+        return msg.type === CustomData.TYPE;
+    }
+    and(predicate: (msg: CustomData) => boolean | undefined): boolean | undefined {
+        return predicate(this);
     }
 }
-export class StringTable extends Message {
-    data?: SourceDemoBuffer;
+export interface IStringTable extends IMessage {
+    data: SourceBuffer;
     stringTables?: StringTableType[];
-    restData?: SourceDemoBuffer;
-    override read(buf: SourceDemoBuffer): StringTable {
-        this.data = buf.readBitStream(buf.readInt32() * 8);
-        return this;
+}
+export class StringTable implements IStringTable {
+    static TYPE = 0x09;
+
+    type = StringTable.TYPE;
+    tick!: number;
+    slot!: number;
+    data!: SourceBuffer;
+    stringTables?: StringTableType[] | undefined;
+
+    protected constructor() {
     }
-    override write(buf: SourceDemoBuffer): StringTable {
-        buf.writeInt32(this.data!.length / 8);
-        buf.writeBitStream(this.data!, this.data!.length);
-        return this;
+
+    write(buf: SourceBuffer): void {
+        StringTable.serialize(buf, this);
+    }
+
+    static create(stringTable: Omit<IStringTable, 'type' | 'write'>): StringTable {
+        return Object.assign(new this(), stringTable);
+    }
+    static deserialize(buf: SourceBuffer): StringTable {
+        const msg = new this();
+        msg.tick = buf.readInt32LE();
+        msg.slot = buf.readUint8();
+        msg.data = buf.readBuffer(buf.readInt32LE());
+        return msg;
+    }
+    static serialize(buf: SourceBuffer, stringTable: IStringTable): void {
+        buf.writeInt32LE(stringTable.tick);
+        buf.writeUint8(stringTable.slot);
+        buf.writeInt32LE(stringTable.data.buffer.byteLength);
+        buf.writeBuffer(stringTable.data);
+    }
+
+    static matches(msg: IMessage): msg is StringTable {
+        return msg.type === StringTable.TYPE;
+    }
+    and(predicate: (msg: StringTable) => boolean | undefined): boolean | undefined {
+        return predicate(this);
+    }
+    inner(
+        predicate: (frame: StringTableType[]) => boolean | undefined,
+    ): boolean | undefined {
+        return this.stringTables && predicate(this.stringTables);
+    }
+    innerUnsafe(
+        predicate: (frame: StringTableType[]) => boolean | undefined,
+    ): boolean | undefined {
+        return predicate(this.stringTables!);
     }
 }
 
 export const DemoMessages = {
-    NewEngine: [
-        undefined,
-        SignOn, // 1
-        Packet, // 2
-        SyncTick, // 3
-        ConsoleCmd, // 4
-        UserCmd, // 5
-        DataTable, // 6
-        Stop, // 7
-        CustomData, // 8
-        StringTable, // 9
-    ],
-    OldEngine: [
-        undefined,
-        SignOn, // 1
-        Packet, // 2
-        SyncTick, // 3
-        ConsoleCmd, // 4
-        UserCmd, // 5
-        DataTable, // 6
-        Stop, // 7
-        StringTable, // 8
-    ],
-    Message,
     SignOn,
     Packet,
     SyncTick,
@@ -233,3 +464,16 @@ export const DemoMessages = {
     CustomData,
     StringTable,
 };
+
+export const DemoMessagesTypes = [
+    undefined,
+    SignOn, // 1
+    Packet, // 2
+    SyncTick, // 3
+    ConsoleCmd, // 4
+    UserCmd, // 5
+    DataTable, // 6
+    Stop, // 7
+    CustomData, // 8
+    StringTable, // 9
+] as const;

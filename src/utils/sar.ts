@@ -1,7 +1,7 @@
 // Copyright (c) 2023-2024, NeKz
 // SPDX-License-Identifier: MIT
 
-import type { SourceDemoBuffer } from '../buffer.ts';
+import type { SourceBuffer } from '../buffer.ts';
 import type { SourceDemo } from '../demo.ts';
 import { DemoMessages } from '../messages.ts';
 
@@ -100,7 +100,7 @@ export interface SarResult {
 }
 
 // _parse_sar_data
-export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMessage => {
+export const readSarMessageData = (data: SourceBuffer, len: number): SarMessage => {
     if (len === 0) {
         return new SarMessage(SarDataType.Invalid);
     }
@@ -120,12 +120,12 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
                 out.type = SarDataType.Invalid;
                 break;
             }
-            out.timescale = data.readFloat32();
+            out.timescale = data.readFloat32LE();
             break;
         case SarDataType.InitialCvar:
             out.initialCvar = {
-                cvar: data.readASCIIString(),
-                val: data.readASCIIString(),
+                cvar: data.readCString(),
+                val: data.readCString(),
             };
             break;
             // deno-lint-ignore no-fallthrough
@@ -133,10 +133,10 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
             out.slot = data.readUint8();
         case SarDataType.EntityInput:
             out.entityInput = {
-                targetname: data.readASCIIString(),
-                classname: data.readASCIIString(),
-                inputname: data.readASCIIString(),
-                parameter: data.readASCIIString(),
+                targetname: data.readCString(),
+                classname: data.readCString(),
+                inputname: data.readCString(),
+                parameter: data.readCString(),
             };
             break;
         case SarDataType.Checksum:
@@ -145,8 +145,8 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
                 break;
             }
             out.checksum = {
-                demoSum: data.readUint32(),
-                sarSum: data.readUint32(),
+                demoSum: data.readUint32LE(),
+                sarSum: data.readUint32LE(),
             };
             break;
         case SarDataType.ChecksumV2:
@@ -155,8 +155,8 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
                 break;
             }
             out.checksumV2 = {
-                sarSum: data.readUint32(),
-                signature: data.readArrayBuffer(64),
+                sarSum: data.readUint32LE(),
+                signature: data.readArray(64),
             };
             break;
         case SarDataType.PortalPlacement:
@@ -167,9 +167,9 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
             out.slot = data.readUint8();
             out.portalPlacement = {
                 orange: Boolean(data.readUint8()),
-                x: data.readFloat32(),
-                y: data.readFloat32(),
-                z: data.readFloat32(),
+                x: data.readFloat32LE(),
+                y: data.readFloat32LE(),
+                z: data.readFloat32LE(),
             };
             break;
         case SarDataType.ChallengeFlags:
@@ -185,7 +185,7 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
                 out.type = SarDataType.Invalid;
                 break;
             }
-            out.pauseTicks = data.readUint32();
+            out.pauseTicks = data.readUint32LE();
             break;
         case SarDataType.WaitRun:
             if (len < 6) {
@@ -193,8 +193,8 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
                 break;
             }
             out.waitRun = {
-                tick: data.readUint32(),
-                cmd: data.readASCIIString(),
+                tick: data.readUint32LE(),
+                cmd: data.readCString(),
             };
             break;
         case SarDataType.HwaitRun:
@@ -203,8 +203,8 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
                 break;
             }
             out.hwaitRun = {
-                ticks: data.readUint32(),
-                cmd: data.readASCIIString(),
+                ticks: data.readUint32LE(),
+                cmd: data.readCString(),
             };
             break;
         case SarDataType.SpeedrunTime:
@@ -213,7 +213,7 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
                 break;
             }
             out.speedrunTime = {
-                nsplits: data.readUint32(),
+                nsplits: data.readUint32LE(),
                 splits: [],
             };
             for (let i = 0; i < out.speedrunTime.nsplits; ++i) {
@@ -224,15 +224,15 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
                 >;
 
                 const split: SplitsType = {
-                    name: data.readASCIIString(),
-                    nsegs: data.readUint32(),
+                    name: data.readCString(),
+                    nsegs: data.readUint32LE(),
                     segs: [],
                 };
 
                 for (let j = 0; j < split.nsegs; ++j) {
                     split.segs!.push({
-                        name: data.readASCIIString(),
-                        ticks: data.readUint32(),
+                        name: data.readCString(),
+                        ticks: data.readUint32LE(),
                     });
                 }
 
@@ -265,8 +265,8 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
                 break;
             }
             out.fileChecksum = {
-                sum: data.readUint32(),
-                path: data.readASCIIString(),
+                sum: data.readUint32LE(),
+                path: data.readCString(),
             };
             break;
         default:
@@ -281,15 +281,15 @@ export const readSarData = (demo: SourceDemo): SarResult => {
     const messages: SarMessage[] = [];
 
     for (const message of demo.findMessages(DemoMessages.CustomData)) {
-        const data = message.data!;
+        const data = message.data;
 
         // _parse_msg
-        if (message.unk !== 0 || data.length === 64) {
+        if (message.callbackIndex !== 0 || data.allocatedBits === 64) {
             continue;
         }
 
-        data.readArrayBuffer(8);
-        const len = (data.length / 8) - 8;
+        data.readArray(8);
+        const len = (data.allocatedBits / 8) - 8;
 
         messages.push(readSarMessageData(data, len));
     }

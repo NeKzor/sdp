@@ -1,211 +1,10 @@
 // Copyright (c) 2018-2024, NeKz
 // SPDX-License-Identifier: MIT
 
-import { BitStream, type BitView } from './lib/bit-buffer.ts';
 import { QAngle } from './types/QAngle.ts';
 import { Vector } from './types/Vector.ts';
 
-export class SourceDemoBuffer extends BitStream {
-    constructor(
-        source: ArrayBuffer | BitView,
-        byteOffset?: number,
-        byteLength?: number,
-    ) {
-        super(source, byteOffset, byteLength);
-    }
-    static from(buffer: SourceDemoBuffer): SourceDemoBuffer {
-        const copy = new SourceDemoBuffer(buffer.view);
-        copy._index = buffer._index;
-        copy._startIndex = buffer._startIndex;
-        copy._length = buffer._length;
-        return copy;
-    }
-    static allocate(bytes: number): SourceDemoBuffer {
-        return new SourceDemoBuffer(new ArrayBuffer(bytes));
-    }
-    static allocateBits(bits: number): SourceDemoBuffer {
-        if ((bits % 8) !== 0) {
-            throw new Error('Number of bits to allocate is not aligned!');
-        }
-        return new SourceDemoBuffer(new ArrayBuffer(bits / 8));
-    }
-    clone(): SourceDemoBuffer {
-        return new SourceDemoBuffer(this.view);
-    }
-    reset(): SourceDemoBuffer {
-        this._index = this._startIndex;
-        return this;
-    }
-    // TODO: implementation
-    readVarInt32(): number {
-        throw new Error('Not implemented yet!');
-    }
-    readVector(): Vector {
-        return new Vector(
-            this.readFloat32(),
-            this.readFloat32(),
-            this.readFloat32(),
-        );
-    }
-    writeVector(vec: Vector): void {
-        this.writeFloat32(vec.x!);
-        this.writeFloat32(vec.y!);
-        this.writeFloat32(vec.z!);
-    }
-    readQAngle(): QAngle {
-        return new QAngle(
-            this.readFloat32(),
-            this.readFloat32(),
-            this.readFloat32(),
-        );
-    }
-    writeQAngle(ang: QAngle): void {
-        this.writeFloat32(ang.pitch!);
-        this.writeFloat32(ang.yaw!);
-        this.writeFloat32(ang.roll!);
-    }
-    readCoord(): number {
-        const COORD_INTEGER_BITS = 14;
-        const COORD_FRACTIONAL_BITS = 5;
-        const COORD_DENOMINATOR = 1 << COORD_FRACTIONAL_BITS;
-        const COORD_RESOLUTION = 1.0 / COORD_DENOMINATOR;
-
-        let value = 0.0;
-        let integer = this.readBits(1);
-        let fraction = this.readBits(1);
-        if (integer || fraction) {
-            const sign = this.readBits(1);
-            if (integer) {
-                integer = this.readBits(COORD_INTEGER_BITS) + 1;
-            }
-            if (fraction) {
-                fraction = this.readBits(COORD_FRACTIONAL_BITS);
-            }
-            value = integer + fraction * COORD_RESOLUTION;
-            if (sign) value = -value;
-        }
-
-        return value;
-    }
-    writeCoord(value: number): void {
-        const COORD_INTEGER_BITS = 14;
-        const COORD_FRACTIONAL_BITS = 5;
-        const COORD_DENOMINATOR = 1 << COORD_FRACTIONAL_BITS;
-        const COORD_RESOLUTION = 1.0 / COORD_DENOMINATOR;
-
-        const sign = value <= -COORD_RESOLUTION ? 1 : 0;
-        let integer = Math.floor(Math.abs(value));
-        const fraction = Math.abs(Math.floor(value * COORD_DENOMINATOR)) & (COORD_DENOMINATOR - 1);
-
-        this.writeBits(integer, 1);
-        this.writeBits(fraction, 1);
-
-        if (integer || fraction) {
-            this.writeBits(sign, 1);
-
-            if (integer) {
-                --integer;
-                this.writeBits(integer, COORD_INTEGER_BITS);
-            }
-            if (fraction) {
-                this.writeBits(fraction, COORD_FRACTIONAL_BITS);
-            }
-        }
-    }
-    readVectorCoord(): Vector {
-        const [x, y, z] = [
-            this.readBoolean(),
-            this.readBoolean(),
-            this.readBoolean(),
-        ];
-        return new Vector(
-            x ? this.readCoord() : 0,
-            y ? this.readCoord() : 0,
-            z ? this.readCoord() : 0,
-        );
-    }
-    writeVectorCoord(vec: Vector): void {
-        const COORD_FRACTIONAL_BITS = 5;
-        const COORD_DENOMINATOR = 1 << COORD_FRACTIONAL_BITS;
-        const COORD_RESOLUTION = 1.0 / COORD_DENOMINATOR;
-
-        const [x, y, z] = [
-            vec.x >= COORD_RESOLUTION || vec.x <= -COORD_RESOLUTION,
-            vec.y >= COORD_RESOLUTION || vec.y <= -COORD_RESOLUTION,
-            vec.z >= COORD_RESOLUTION || vec.z <= -COORD_RESOLUTION,
-        ];
-
-        this.writeBoolean(x);
-        this.writeBoolean(y);
-        this.writeBoolean(z);
-
-        x && this.writeCoord(vec.x);
-        y && this.writeCoord(vec.y);
-        z && this.writeCoord(vec.z);
-    }
-    readAngles(): QAngle {
-        const { x, y, z } = this.readVectorCoord();
-        return new QAngle(x, y, z);
-    }
-    writeAngles(angle: QAngle): void {
-        return this.writeVectorCoord(new Vector(angle.pitch, angle.yaw, angle.roll));
-    }
-    readField(bits: number, fallbackValue = 0): number {
-        return this.readBoolean() ? this.readBits(bits) : fallbackValue;
-    }
-    writeField(field: number, bits: number, fallbackValue = 0): void {
-        this.writeBoolean(field !== fallbackValue);
-        if (field !== fallbackValue) {
-            this.writeBits(field, bits);
-        }
-    }
-    readFieldThen(
-        bits: number,
-        fallbackValue: number,
-        callback: (bits: number) => void,
-    ): number | void {
-        return this.readBoolean() ? callback(this.readBits(bits)) : fallbackValue;
-    }
-    writeFieldThen(
-        field: number,
-        bits: number,
-        fallbackValue: number,
-        callback: (bits: number) => void,
-    ): void {
-        this.writeBoolean(field !== fallbackValue);
-        if (field !== fallbackValue) {
-            this.writeBits(field, bits);
-            callback(field);
-        }
-    }
-    override readBitStream(bitLength: number): SourceDemoBuffer {
-        const slice = new SourceDemoBuffer(this._view);
-        slice._startIndex = this._index;
-        slice._index = this._index;
-        slice.length = bitLength;
-        this._index += bitLength;
-        return slice;
-    }
-    override writeBitStream(stream: BitStream, length: number): void {
-        if (!length) {
-            length = stream.bitsLeft;
-        }
-
-        let bitsToWrite = 0;
-        let offset = stream.offset;
-
-        while (length > 0) {
-            bitsToWrite = Math.min(length, 32);
-            this.writeBits(stream.peakBits(offset, bitsToWrite, false), bitsToWrite);
-            offset += bitsToWrite;
-            length -= bitsToWrite;
-        }
-    }
-    override writeArrayBuffer(buffer: ArrayBuffer, byteLength: number): void {
-        this.writeBitStream(new SourceDemoBuffer(buffer), byteLength * 8);
-    }
-}
-
+const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
 const COORD_INTEGER_BITS = 14;
@@ -232,17 +31,29 @@ export class SourceBuffer {
         return this.buffer.byteLength * 8;
     }
 
-    static new(buffer: ArrayBuffer) {
+    get bitsLeft(): number {
+        return this.allocatedBits - this.bitOffset;
+    }
+
+    static create(buffer: ArrayBuffer): SourceBuffer {
         return new SourceBuffer(buffer);
     }
-    static allocate(bytes: number) {
+    static from(elements: Iterable<number>): SourceBuffer {
+        return new SourceBuffer(new Uint8Array(elements).buffer);
+    }
+    static allocate(bytes: number): SourceBuffer {
         return new SourceBuffer(new ArrayBuffer(bytes));
     }
 
     clone(): SourceBuffer {
         const array = new Uint8Array(this.buffer.byteLength);
-        array.set(new Uint8Array(this.buffer));
-        return new SourceBuffer(array);
+        array.set(new Uint8Array(this.buffer), 0);
+        return new SourceBuffer(array.buffer);
+    }
+
+    reset(): SourceBuffer {
+        this.bitOffset = 0;
+        return this;
     }
 
     toArray(): Uint8Array {
@@ -296,11 +107,15 @@ export class SourceBuffer {
         this.bitOffset = position;
         return this;
     }
+    when(check: boolean, callback: (buffer: SourceBuffer) => void): SourceBuffer {
+        check && callback(this);
+        return this;
+    }
 
     peekArray(offset: number, bytes: number): Uint8Array {
         const value = new Uint8Array(bytes);
         for (let i = 0; i < bytes; i += 1) {
-            value[i] = this.peekUint8(offset);
+            value[i] = this.peekUint8(offset + (i * 8));
         }
         return value;
     }
@@ -316,10 +131,10 @@ export class SourceBuffer {
         return this;
     }
     peekBuffer(offset: number, bytes: number): SourceBuffer {
-        return new SourceBuffer(this.peekArray(offset, bytes));
+        return new SourceBuffer(this.peekArray(offset, bytes).buffer);
     }
     readBuffer(bytes: number): SourceBuffer {
-        return new SourceBuffer(this.readArray(bytes));
+        return new SourceBuffer(this.readArray(bytes).buffer);
     }
     writeBuffer(buffer: SourceBuffer): SourceBuffer {
         const array = new Uint8Array(buffer.buffer);
@@ -332,17 +147,37 @@ export class SourceBuffer {
     peekCString(offset: number): string {
         const start = offset;
         while (this.peekUint8(offset)) {
-            offset += 1;
+            offset += 8;
         }
-        return textDecoder.decode(this.peekArray(start, (offset + 1) - start));
+        return textDecoder.decode(this.peekArray(start, ((offset + 8) - start) / 8)).slice(0, -1);
     }
     readCString(): string {
         const start = this.bitOffset;
         let end = start;
         while (this.peekUint8(end)) {
-            end += 1;
+            end += 8;
         }
-        return textDecoder.decode(this.readArray((end + 1) - start));
+        return textDecoder.decode(this.readArray(((end + 8) - start) / 8)).slice(0, -1);
+    }
+    writeCString(value: string): SourceBuffer {
+        this.writeArray(textEncoder.encode(value + '\0'));
+        return this;
+    }
+    peekStringBuffer(offset: number, bytes: number): string {
+        const value = textDecoder.decode(this.peekArray(offset, bytes));
+        const nul = value.indexOf('\0');
+        return nul === -1 ? value : value.slice(0, nul);
+    }
+    readStringBuffer(bytes: number): string {
+        const value = textDecoder.decode(this.readArray(bytes));
+        const nul = value.indexOf('\0');
+        return nul === -1 ? value : value.slice(0, nul);
+    }
+    writeStringBuffer(value: string, bytes: number): SourceBuffer {
+        const array = new Uint8Array(bytes);
+        array.set(textEncoder.encode(value), 0);
+        this.writeArray(array);
+        return this;
     }
 
     peekUBitsLE(offset: number, count: number): number {
@@ -501,7 +336,7 @@ export class SourceBuffer {
     }
 
     peekUint8(offset: number): number {
-        return (offset % 8) === 0 ? this.view.getUint8(offset * 8) : this.peekUBitsLE(offset, 8);
+        return (offset % 8) === 0 ? this.view.getUint8(offset / 8) : this.peekUBitsLE(offset, 8);
     }
     readUint8(): number {
         const value = this.peekUint8(this.bitOffset);
@@ -518,7 +353,7 @@ export class SourceBuffer {
         return this;
     }
     peekInt8(offset: number): number {
-        return (offset % 8) === 0 ? this.view.getInt8(offset * 8) : this.peekBitsLE(offset, 8);
+        return (offset % 8) === 0 ? this.view.getInt8(offset / 8) : this.peekBitsLE(offset, 8);
     }
     readInt8(): number {
         const value = this.peekInt8(this.bitOffset);
@@ -830,16 +665,20 @@ export class SourceBuffer {
         return this;
     }
 
-    peekVector(offset: number) {
+    readVarInt32(): number {
+        throw new Error('readVarInt32() not implemented!');
+    }
+
+    peekVector(offset: number): Vector {
         return new Vector(
             this.peekFloat32LE(offset),
             this.peekFloat32LE(offset + 8),
             this.peekFloat32LE(offset + 16),
         );
     }
-    readVector() {
+    readVector(): Vector {
         const value = this.peekVector(this.bitOffset);
-        this.bitOffset += 24;
+        this.bitOffset += 96;
         return value;
     }
     writeVector(value: Vector): SourceBuffer {
@@ -849,16 +688,16 @@ export class SourceBuffer {
         return this;
     }
 
-    peekQAngle(offset: number) {
+    peekQAngle(offset: number): QAngle {
         return new QAngle(
             this.peekFloat32LE(offset),
             this.peekFloat32LE(offset + 8),
             this.peekFloat32LE(offset + 16),
         );
     }
-    readQAngle() {
+    readQAngle(): QAngle {
         const value = this.peekQAngle(this.bitOffset);
-        this.bitOffset += 24;
+        this.bitOffset += 96;
         return value;
     }
     writeQAngle(value: QAngle): SourceBuffer {
@@ -889,7 +728,7 @@ export class SourceBuffer {
         }
         return [value, read];
     }
-    readCoord() {
+    readCoord(): number {
         let value = 0.0;
         let integer = this.readUBitsLE(1);
         let fraction = this.readUBitsLE(1);
@@ -944,7 +783,7 @@ export class SourceBuffer {
         return this;
     }
 
-    peekVectorCoord(offset: number) {
+    peekVectorCoord(offset: number): Vector {
         const [rx, ry, rz] = [
             this.peekBoolean(offset),
             this.peekBoolean(offset + 1),
@@ -972,7 +811,7 @@ export class SourceBuffer {
 
         return new Vector(x, y, z);
     }
-    readVectorCoord() {
+    readVectorCoord(): Vector {
         const [x, y, z] = [
             this.readBoolean(),
             this.readBoolean(),

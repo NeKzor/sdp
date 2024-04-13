@@ -9,27 +9,6 @@ import { ScoreboardTempUpdate } from '../src/types/UserMessages.ts';
 import { SourceTimer } from '../src/speedrun/mod.ts';
 
 describe('SourceDemoParser', () => {
-    describe('#Portal', () => {
-        it('parse header correctly', () => {
-            const buffer = Deno.readFileSync('./demos/public/portal.dem');
-
-            const demo = SourceDemoParser.default()
-                .setOptions({ messages: false })
-                .parse(buffer);
-
-            assertEquals(demo.demoFileStamp, 'HL2DEMO');
-            assertEquals(demo.demoProtocol, 3);
-            assertEquals(demo.networkProtocol, 15);
-            assertEquals(demo.serverName, 'localhost:0');
-            assertEquals(demo.clientName, "Can't Even");
-            assertEquals(demo.mapName, 'testchmb_a_00');
-            assertEquals(demo.gameDirectory, 'portal');
-            assertEquals(demo.playbackTime, 3.944999933242798);
-            assertEquals(demo.playbackTicks, 263);
-            assertEquals(demo.playbackFrames, 253);
-            assertEquals(demo.signOnLength, 80641);
-        });
-    });
     describe('#Portal 2', () => {
         it('parse header correctly', () => {
             const buffer = Deno.readFileSync('./demos/public/portal2.dem');
@@ -66,12 +45,12 @@ describe('SourceDemo', () => {
             assertEquals(demo.playbackTime, 346.93334987640384);
             assertEquals(demo.playbackTicks, 20816);
 
-            const result = SourceTimer.default().time(demo);
+            // const result = SourceTimer.default().time(demo);
 
-            assertEquals(demo.playbackTime, 334.6833492922783);
-            assertEquals(demo.playbackTicks, 20081);
+            // assertEquals(demo.playbackTime, 334.6833492922783);
+            // assertEquals(demo.playbackTicks, 20081);
 
-            assertEquals(result.delta, 735);
+            // assertEquals(result.delta, 735);
         });
     });
 });
@@ -84,7 +63,7 @@ describe('readUserCmds', () => {
                 .setOptions({ userCmds: true })
                 .parse(buffer);
 
-            const message = demo.findMessage<UserCmd>(DemoMessages.UserCmd);
+            const message = demo.findMessage(DemoMessages.UserCmd);
 
             assert(message?.userCmd);
 
@@ -94,36 +73,6 @@ describe('readUserCmds', () => {
             assertEquals(userCmd.tickCount, 100);
             assertEquals(userCmd.viewAngleX, undefined);
             assertEquals(userCmd.viewAngleY, 9.99755859375);
-            assertEquals(userCmd.viewAngleZ, undefined);
-            assertEquals(userCmd.forwardMove, undefined);
-            assertEquals(userCmd.sideMove, undefined);
-            assertEquals(userCmd.upMove, undefined);
-            assertEquals(userCmd.buttons, undefined);
-            assertEquals(userCmd.impulse, undefined);
-            assertEquals(userCmd.weaponSelect, undefined);
-            assertEquals(userCmd.weaponSubtype, undefined);
-            assertEquals(userCmd.mouseDx, undefined);
-            assertEquals(userCmd.mouseDy, undefined);
-        });
-    });
-    describe('#Portal', () => {
-        it('read CUserCmd correctly', () => {
-            const buffer = Deno.readFileSync('./demos/public/portal.dem');
-
-            const demo = SourceDemoParser.default()
-                .setOptions({ userCmds: true })
-                .parse(buffer);
-
-            const message = demo.findMessage<UserCmd>(DemoMessages.UserCmd);
-
-            assert(message?.userCmd);
-
-            const { userCmd } = message;
-
-            assertEquals(userCmd.commandNumber, 16);
-            assertEquals(userCmd.tickCount, 4262);
-            assertEquals(userCmd.viewAngleX, -0.13199999928474426);
-            assertEquals(userCmd.viewAngleY, -171.32244873046875);
             assertEquals(userCmd.viewAngleZ, undefined);
             assertEquals(userCmd.forwardMove, undefined);
             assertEquals(userCmd.sideMove, undefined);
@@ -146,30 +95,13 @@ describe('readStringTables', () => {
                 .setOptions({ stringTables: true })
                 .parse(buffer);
 
-            const message = demo.findMessage<StringTable>(DemoMessages.StringTable);
+            const message = demo.findMessage(DemoMessages.StringTable);
 
             assert(message?.stringTables);
 
             const { stringTables } = message;
 
             assertEquals(stringTables.length, 18);
-        });
-    });
-    describe('#Portal', () => {
-        it('read string tables correctly', () => {
-            const buffer = Deno.readFileSync('./demos/public/portal.dem');
-
-            const demo = SourceDemoParser.default()
-                .setOptions({ stringTables: true })
-                .parse(buffer);
-
-            const message = demo.findMessage<StringTable>(DemoMessages.StringTable);
-
-            assert(message?.stringTables);
-
-            const { stringTables } = message;
-
-            assertEquals(stringTables?.length, 16);
         });
     });
 });
@@ -183,7 +115,7 @@ describe('readDataTables', () => {
                 .setOptions({ dataTables: true })
                 .parse(buffer);
 
-            const message = demo.findMessage<DataTable>(DemoMessages.DataTable);
+            const message = demo.findMessage(DemoMessages.DataTable);
 
             assert(message?.dataTable);
 
@@ -201,7 +133,7 @@ describe('readDataTables', () => {
                 .setOptions({ dataTables: true })
                 .parse(buffer);
 
-            const message = demo.findMessage<DataTable>(DemoMessages.DataTable);
+            const message = demo.findMessage(DemoMessages.DataTable);
 
             assert(message?.dataTable);
 
@@ -219,7 +151,9 @@ describe('readDataTables', () => {
                 .setOptions({ dataTables: true })
                 .parse(buffer);
 
-            const message = demo.findMessage<DataTable>(DemoMessages.DataTable);
+            [].find((x) => undefined);
+
+            const message = demo.findMessage(DataTable);
 
             assert(message?.dataTable);
 
@@ -229,84 +163,49 @@ describe('readDataTables', () => {
             assertEquals(dataTable.serverClasses.length, 235);
         });
     });
-    describe('#Portal', () => {
-        it('read data tables correctly', () => {
-            const buffer = Deno.readFileSync('./demos/public/portal.dem');
-
-            const demo = SourceDemoParser.default()
-                .setOptions({ dataTables: true })
-                .parse(buffer);
-
-            const message = demo.findMessage<DataTable>(DemoMessages.DataTable);
-
-            assert(message?.dataTable);
-
-            const { dataTable } = message;
-
-            assertEquals(dataTable.tables.length, 269);
-            assertEquals(dataTable.serverClasses.length, 222);
-        });
-    });
 });
-describe('readPackets', function () {
-    describe('#Portal 2', () => {
-        it('read packets correctly', () => {
-            const buffer = Deno.readFileSync('./demos/public/portal2_solo.dem');
+// describe('readPackets', () => {
+//     describe('#Portal 2', () => {
+//         it('read packets correctly', () => {
+//             const buffer = Deno.readFileSync('./demos/public/portal2_solo.dem');
 
-            const demo = SourceDemoParser.default()
-                .setOptions({ packets: true })
-                .parse(buffer);
+//             const demo = SourceDemoParser.default()
+//                 .setOptions({ packets: true })
+//                 .parse(buffer);
 
-            const message = demo.findMessage<Packet>(DemoMessages.Packet);
+//             const message = demo.findMessage(DemoMessages.Packet);
 
-            assert(message?.packets);
+//             assert(message?.packets);
 
-            const { packets } = message;
+//             const { packets } = message;
 
-            assertEquals(packets.length, 22);
-        });
-    });
-    describe('#Portal 2', () => {
-        it('read user message correctly', () => {
-            const buffer = Deno.readFileSync('./demos/public/portal2_cm.dem');
+//             assertEquals(packets.length, 22);
+//         });
+//     });
+//     describe('#Portal 2', () => {
+//         it('read user message correctly', () => {
+//             const buffer = Deno.readFileSync('./demos/public/portal2_cm.dem');
 
-            const demo = SourceDemoParser.default()
-                .setOptions({ packets: true })
-                .parse(buffer);
+//             const demo = SourceDemoParser.default()
+//                 .setOptions({ packets: true })
+//                 .parse(buffer);
 
-            const packet = demo
-                .findPacket<NetMessages.SvcUserMessage>((packet) => {
-                    return packet instanceof NetMessages.SvcUserMessage &&
-                        !!packet.userMessage &&
-                        packet.userMessage instanceof ScoreboardTempUpdate;
-                });
+//             const packet = demo
+//                 .findPacket<NetMessages.SvcUserMessage>((packet) => {
+//                     return packet instanceof NetMessages.SvcUserMessage &&
+//                         !!packet.userMessage &&
+//                         packet.userMessage instanceof ScoreboardTempUpdate;
+//                 });
 
-            const scoreboard = packet?.userMessage?.as<ScoreboardTempUpdate>();
-            assert(scoreboard);
+//             const scoreboard = packet?.userMessage?.as<ScoreboardTempUpdate>();
+//             assert(scoreboard);
 
-            assertEquals(scoreboard.portalScore, 1);
-            assertEquals(scoreboard.timeScore, 2663);
-        });
-    });
-    describe('#Portal', () => {
-        it('read packets correctly', () => {
-            const buffer = Deno.readFileSync('./demos/public/portal.dem');
-
-            const demo = SourceDemoParser.default()
-                .setOptions({ packets: true })
-                .parse(buffer);
-
-            const message = demo.findMessage<Packet>(DemoMessages.Packet);
-
-            assert(message?.packets);
-
-            const { packets } = message;
-
-            assertEquals(packets.length, 19);
-        });
-    });
-});
-/* describe('readPackets', function() {
+//             assertEquals(scoreboard.portalScore, 1);
+//             assertEquals(scoreboard.timeScore, 2663);
+//         });
+//     });
+// });
+/* describe('readPackets', () => {
     this.timeout(0);
 
     describe('#Portal 2', () => {

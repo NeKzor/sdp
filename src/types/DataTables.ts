@@ -1,8 +1,7 @@
 // Copyright (c) 2018-2024, NeKz
 // SPDX-License-Identifier: MIT
 
-import type { SourceDemoBuffer } from '../buffer.ts';
-import type { SourceDemo } from '../demo.ts';
+import type { SourceBuffer } from '../buffer.ts';
 
 export const SendPropType = {
     Int: 0,
@@ -42,23 +41,23 @@ export class SendTable {
     needsDecoder?: boolean;
     netTableName?: string;
     props?: SendProp[];
-    read(buf: SourceDemoBuffer, demo: SourceDemo) {
+    read(buf: SourceBuffer) {
         this.needsDecoder = buf.readBoolean();
-        this.netTableName = buf.readASCIIString();
+        this.netTableName = buf.readCString();
         this.props = [];
 
-        let props = buf.readBits(10, false);
+        let props = buf.readUBitsLE(10);
         while (props--) {
             const prop = new SendProp();
-            prop.read(buf, demo);
+            prop.read(buf);
             this.props.push(prop);
         }
     }
-    write(buf: SourceDemoBuffer, demo: SourceDemo) {
+    write(buf: SourceBuffer) {
         buf.writeBoolean(this.needsDecoder!);
-        buf.writeASCIIString(this.netTableName!);
-        buf.writeBits(this.props!.length, 10);
-        this.props?.forEach((prop) => prop.write(buf, demo));
+        buf.writeCString(this.netTableName!);
+        buf.writeBitsLE(this.props!.length, 10);
+        this.props?.forEach((prop) => prop.write(buf));
     }
 }
 
@@ -72,20 +71,17 @@ export class SendProp {
     highValue?: number;
     numBits?: number;
     elements?: number;
-    read(buf: SourceDemoBuffer, demo: SourceDemo) {
-        this.type = buf.readBits(5, false);
-        this.varName = buf.readASCIIString();
-        this.flags = buf.readBits(demo.demoProtocol === 2 ? 11 : 16, false);
-
-        if (demo.isPortal2Engine) {
-            this.unk = buf.readBits(11, false);
-        }
+    read(buf: SourceBuffer) {
+        this.type = buf.readUBitsLE(5);
+        this.varName = buf.readCString();
+        this.flags = buf.readUBitsLE(16);
+        this.unk = buf.readUBitsLE(11);
 
         if (
             this.type === SendPropType.SendTable ||
             (this.flags & SendPropFlags.Exclude) !== 0
         ) {
-            this.excludeDtName = buf.readASCIIString();
+            this.excludeDtName = buf.readCString();
         } else if (
             this.type === SendPropType.String ||
             this.type === SendPropType.Int ||
@@ -93,29 +89,26 @@ export class SendProp {
             this.type === SendPropType.Vector ||
             this.type === SendPropType.VectorXy
         ) {
-            this.lowValue = buf.readFloat32();
-            this.highValue = buf.readFloat32();
-            this.numBits = buf.readBits(7, false);
+            this.lowValue = buf.readFloat32LE();
+            this.highValue = buf.readFloat32LE();
+            this.numBits = buf.readUBitsLE(7);
         } else if (this.type === SendPropType.Array) {
-            this.elements = buf.readBits(10, false);
+            this.elements = buf.readUBitsLE(10);
         } else {
             throw new Error('Invalid prop type: ' + this.type);
         }
     }
-    write(buf: SourceDemoBuffer, demo: SourceDemo) {
-        buf.writeBits(this.type!, 5);
-        buf.writeASCIIString(this.varName!);
-        buf.writeBits(this.flags!, demo.demoProtocol === 2 ? 11 : 16);
-
-        if (demo.isPortal2Engine) {
-            buf.writeBits(this.unk!, 11);
-        }
+    write(buf: SourceBuffer) {
+        buf.writeBitsLE(this.type!, 5);
+        buf.writeCString(this.varName!);
+        buf.writeBitsLE(this.flags!, 16);
+        buf.writeBitsLE(this.unk!, 11);
 
         if (
             this.type === SendPropType.SendTable ||
             (this.flags! & SendPropFlags.Exclude) !== 0
         ) {
-            buf.writeASCIIString(this.excludeDtName!);
+            buf.writeCString(this.excludeDtName!);
         } else if (
             this.type === SendPropType.String ||
             this.type === SendPropType.Int ||
@@ -123,11 +116,11 @@ export class SendProp {
             this.type === SendPropType.Vector ||
             this.type === SendPropType.VectorXy
         ) {
-            buf.writeFloat32(this.lowValue!);
-            buf.writeFloat32(this.highValue!);
-            buf.writeBits(this.numBits!, 7);
+            buf.writeFloat32LE(this.lowValue!);
+            buf.writeFloat32LE(this.highValue!);
+            buf.writeBitsLE(this.numBits!, 7);
         } else if (this.type === SendPropType.Array) {
-            buf.writeBits(this.elements!, 10);
+            buf.writeBitsLE(this.elements!, 10);
         } else {
             throw new Error('Invalid prop type: ' + this.type);
         }
@@ -138,14 +131,14 @@ export class ServerClassInfo {
     classId?: number;
     className?: string;
     dataTableName?: string;
-    read(buf: SourceDemoBuffer) {
-        this.classId = buf.readInt16();
-        this.className = buf.readASCIIString();
-        this.dataTableName = buf.readASCIIString();
+    read(buf: SourceBuffer) {
+        this.classId = buf.readInt16LE();
+        this.className = buf.readCString();
+        this.dataTableName = buf.readCString();
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeInt16(this.classId!);
-        buf.writeASCIIString(this.className!);
-        buf.writeASCIIString(this.dataTableName!);
+    write(buf: SourceBuffer) {
+        buf.writeInt16LE(this.classId!);
+        buf.writeCString(this.className!);
+        buf.writeCString(this.dataTableName!);
     }
 }

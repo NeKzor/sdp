@@ -113,7 +113,7 @@ export class SourceTimer {
         let oldPosition = new Vector(0, 0, 0);
         let oldCommands: string[] = [];
 
-        demo.findMessages<Packet>(Packet).forEach(({ tick, cmdInfo }) => {
+        demo.findMessages(Packet).forEach(({ tick, cmdInfo }) => {
             if (tick !== 0 && !gameInfo.get(tick)) {
                 const info = cmdInfo![this.splitScreenIndex];
                 if (!info) {
@@ -131,7 +131,7 @@ export class SourceTimer {
             }
         });
 
-        demo.findMessages<ConsoleCmd>(ConsoleCmd).forEach(({ tick, command }) => {
+        demo.findMessages(ConsoleCmd).forEach(({ tick, command }) => {
             // Ignore button inputs since they aren't really useful
             if (tick === 0 || command!.startsWith('+') || command!.startsWith('-')) {
                 return;

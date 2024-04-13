@@ -18,19 +18,19 @@ const registeredJumps = demo
 
 const actualJumpInputs = demo
     .findMessages(DemoMessages.ConsoleCmd)
-    .filter(({ command }) => command!.startsWith('+jump'));
+    .filter(({ command }) => command.startsWith('+jump'));
 
 let prevTick = 0;
 let mouseJumps = 0;
 let keyboardJumps = 0;
 
 actualJumpInputs.forEach(({ tick, command }) => {
-    const mouse = command!.endsWith('112') || command!.endsWith('113');
+    const mouse = command.endsWith('112') || command.endsWith('113');
     if (tick !== prevTick) {
         console.log('-----------------');
     }
     console.log(
-        `${tick} ${command!.split(' ')[0]} (${mouse ? 'mouse' : 'keyboard'})`,
+        `${tick} ${command.split(' ')[0]} (${mouse ? 'mouse' : 'keyboard'})`,
     );
 
     if (mouse) {
@@ -38,7 +38,7 @@ actualJumpInputs.forEach(({ tick, command }) => {
     } else {
         ++keyboardJumps;
     }
-    prevTick = tick!;
+    prevTick = tick;
 });
 
 console.log('---- results ----');

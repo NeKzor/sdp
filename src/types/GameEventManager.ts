@@ -1,30 +1,30 @@
-import type { SourceDemoBuffer } from '../buffer.ts';
+import type { SourceBuffer } from '../buffer.ts';
 
 export class GameEventDescriptor {
     eventId?: number;
     name?: string;
     keys?: Map<string, number>;
-    read(buf: SourceDemoBuffer) {
-        this.eventId = buf.readBits(9);
-        this.name = buf.readASCIIString();
+    read(buf: SourceBuffer) {
+        this.eventId = buf.readBitsLE(9);
+        this.name = buf.readCString();
         this.keys = new Map();
 
-        let type = buf.readBits(3);
+        let type = buf.readBitsLE(3);
         while (type !== 0) {
-            this.keys.set(buf.readASCIIString(), type);
-            type = buf.readBits(3);
+            this.keys.set(buf.readCString(), type);
+            type = buf.readBitsLE(3);
         }
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeBits(this.eventId!, 9);
-        buf.writeASCIIString(this.name!);
+    write(buf: SourceBuffer) {
+        buf.writeBitsLE(this.eventId!, 9);
+        buf.writeCString(this.name!);
 
         this.keys!.forEach((type, key) => {
-            buf.writeBits(type, 3);
-            buf.writeASCIIString(key);
+            buf.writeBitsLE(type, 3);
+            buf.writeCString(key);
         });
 
-        buf.writeBits(0, 3);
+        buf.writeBitsLE(0, 3);
     }
 }
 
@@ -49,8 +49,8 @@ export class GameEventManager {
     constructor(gameEvents: GameEventDescriptor[]) {
         this.gameEvents = gameEvents;
     }
-    deserializeEvent(buf: SourceDemoBuffer): GameEvent {
-        const eventId = buf.readBits(9);
+    deserializeEvent(buf: SourceBuffer): GameEvent {
+        const eventId = buf.readBitsLE(9);
 
         const descriptor = this.gameEvents.find(
             (descriptor) => descriptor.eventId === eventId,
@@ -66,16 +66,16 @@ export class GameEventManager {
                 case 0:
                     break;
                 case 1:
-                    event.set(keyName, buf.readASCIIString());
+                    event.set(keyName, buf.readCString());
                     break;
                 case 2:
-                    event.set(keyName, buf.readFloat32());
+                    event.set(keyName, buf.readFloat32LE());
                     break;
                 case 3:
-                    event.set(keyName, buf.readInt32());
+                    event.set(keyName, buf.readInt32LE());
                     break;
                 case 4:
-                    event.set(keyName, buf.readInt16());
+                    event.set(keyName, buf.readInt16LE());
                     break;
                 case 5:
                     event.set(keyName, buf.readInt8());
@@ -90,24 +90,24 @@ export class GameEventManager {
 
         return event;
     }
-    serializeEvent(event: GameEvent, buf: SourceDemoBuffer): GameEvent {
-        buf.writeBits(event.descriptor.eventId!, 9);
+    serializeEvent(event: GameEvent, buf: SourceBuffer): GameEvent {
+        buf.writeBitsLE(event.descriptor.eventId!, 9);
 
         for (const [keyName, type] of event.descriptor.keys!.entries()) {
             switch (type) {
                 case 0:
                     break;
                 case 1:
-                    buf.writeASCIIString(event.get(keyName));
+                    buf.writeCString(event.get(keyName));
                     break;
                 case 2:
-                    buf.writeFloat32(event.get(keyName));
+                    buf.writeFloat32LE(event.get(keyName));
                     break;
                 case 3:
-                    buf.writeInt32(event.get(keyName));
+                    buf.writeInt32LE(event.get(keyName));
                     break;
                 case 4:
-                    buf.writeInt16(event.get(keyName));
+                    buf.writeInt16LE(event.get(keyName));
                     break;
                 case 5:
                     buf.writeInt8(event.get(keyName));

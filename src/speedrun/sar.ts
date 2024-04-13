@@ -15,13 +15,13 @@ export class SarTimer {
         endTick: number | undefined;
         delta: number;
     } | undefined {
-        if (!demo.messages?.length) {
+        if (!demo.messages.length) {
             throw new Error('Cannot adjust ticks without parsed messages.');
         }
 
         const timings = [];
         for (const message of demo.messages) {
-            if (message instanceof ConsoleCmd) {
+            if (ConsoleCmd.matches(message)) {
                 if (message.command === 'sar_timer_start') {
                     timings.push({ tick: message.tick, type: 'start' });
                 } else if (message.command === 'sar_timer_stop') {
@@ -53,16 +53,16 @@ export class SarReplay {
     }
     convert(demos: SourceDemo[]): ArrayBufferLike {
         this.writeString(ReplayHeader);
-        this.writeInt32(demos.length);
+        this.writeInt32LE(demos.length);
 
         for (const demo of demos) {
-            for (const message of demo.messages ?? []) {
-                if (message instanceof UserCmd && message.userCmd) {
-                    this.writeInt32(message.userCmd.buttons || 0);
+            for (const message of demo.messages) {
+                if (UserCmd.matches(message) && message.userCmd) {
+                    this.writeInt32LE(message.userCmd.buttons || 0);
                     this.writeFloat(message.userCmd.forwardMove || 0);
                     this.writeInt8(message.userCmd.impulse || 0);
-                    this.writeInt16(message.userCmd.mouseDx || 0);
-                    this.writeInt16(message.userCmd.mouseDy || 0);
+                    this.writeInt16LE(message.userCmd.mouseDx || 0);
+                    this.writeInt16LE(message.userCmd.mouseDy || 0);
                     this.writeFloat(message.userCmd.sideMove || 0);
                     this.writeFloat(message.userCmd.upMove || 0);
                     this.writeFloat(message.userCmd.viewAngleX || 0);
@@ -96,12 +96,12 @@ export class SarReplay {
         this.buffer = this.concat([this.buffer, data.buffer]);
         return result;
     }
-    writeInt16(value: number): void {
+    writeInt16LE(value: number): void {
         const data = this.alloc(2);
         data.setInt16(value, 0, true);
         this.buffer = this.concat([this.buffer, data.buffer]);
     }
-    writeInt32(value: number): void {
+    writeInt32LE(value: number): void {
         const data = this.alloc(4);
         data.setInt32(value, 0, true);
         this.buffer = this.concat([this.buffer, data.buffer]);

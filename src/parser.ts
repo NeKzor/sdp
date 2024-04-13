@@ -1,7 +1,7 @@
 // Copyright (c) 2018-2024, NeKz
 // SPDX-License-Identifier: MIT
 
-import { SourceDemoBuffer } from './buffer.ts';
+import { SourceBuffer } from './buffer.ts';
 import { SourceDemo } from './demo.ts';
 
 export interface ParsingOptions {
@@ -38,13 +38,13 @@ export class SourceDemoParser {
         };
         return this;
     }
-    prepare(buffer: ArrayBuffer): SourceDemoBuffer {
+    prepare(buffer: ArrayBuffer): SourceBuffer {
         const extended = new Uint8Array(
             buffer.byteLength + 4 - (buffer.byteLength % 4),
         );
         extended.set(new Uint8Array(buffer), 0);
 
-        return new SourceDemoBuffer(extended.buffer);
+        return new SourceBuffer(extended.buffer);
     }
     parse(buffer: ArrayBuffer): SourceDemo {
         const buf = this.prepare(buffer);
@@ -53,7 +53,7 @@ export class SourceDemoParser {
         if (this.options.header) demo.readHeader(buf);
         if (this.options.messages) demo.readMessages(buf);
 
-        if (demo.messages?.length) {
+        if (demo.messages.length) {
             if (this.options.stringTables) demo.readStringTables();
             if (this.options.dataTables) demo.readDataTables();
             if (this.options.packets) demo.readPackets();
@@ -67,7 +67,7 @@ export class SourceDemoParser {
             throw new Error('Cannot save demo without parsed header and messages.');
         }
 
-        if (demo.messages?.length) {
+        if (demo.messages.length) {
             if (this.options.stringTables) demo.writeStringTables();
             if (this.options.dataTables) demo.writeDataTables();
             if (this.options.packets) demo.writePackets();
@@ -75,14 +75,11 @@ export class SourceDemoParser {
         }
 
         const padding = 4 - (bufferSize % 4);
-        const extended = new Uint8Array(bufferSize + padding);
-        const buf = new SourceDemoBuffer(extended.buffer);
+        const buffer = SourceBuffer.allocate(bufferSize + padding);
 
-        demo.writeHeader(buf);
-        demo.writeMessages(buf);
+        demo.writeHeader(buffer);
+        demo.writeMessages(buffer);
 
-        const result = new Uint8Array(bufferSize);
-        result.set(extended.slice(0, bufferSize), 0);
-        return result;
+        return buffer.toArray();
     }
 }

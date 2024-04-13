@@ -1,36 +1,35 @@
 // Copyright (c) 2018-2024, NeKz
 // SPDX-License-Identifier: MIT
 
-import { SourceDemoBuffer } from '../buffer.ts';
-import type { SourceDemo } from '../demo.ts';
+import { SourceBuffer } from '../buffer.ts';
 
 export class StringTable {
     name?: string;
     entries?: StringTableEntry[];
     classes?: StringTableClass[];
-    read(buf: SourceDemoBuffer, demo: SourceDemo) {
-        this.name = buf.readASCIIString();
+    read(buf: SourceBuffer) {
+        this.name = buf.readCString();
         this.entries = [];
         this.classes = [];
 
         const EntryType = StringTableEntryTypes[this.name];
 
-        let entries = buf.readInt16();
+        let entries = buf.readInt16LE();
         while (entries--) {
-            const entryName = buf.readASCIIString();
+            const entryName = buf.readCString();
             const entry = new StringTableEntry(entryName);
 
             if (buf.readBoolean()) {
-                entry.read(buf, EntryType, demo);
+                entry.read(buf, EntryType);
             }
 
             this.entries.push(entry);
         }
 
         if (buf.readBoolean()) {
-            let entries = buf.readInt16();
+            let entries = buf.readInt16LE();
             while (entries--) {
-                const entryName = buf.readASCIIString();
+                const entryName = buf.readCString();
                 const entry = new StringTableClass(entryName);
 
                 if (buf.readBoolean()) {
@@ -41,24 +40,24 @@ export class StringTable {
             }
         }
     }
-    write(buf: SourceDemoBuffer, demo: SourceDemo) {
-        buf.writeASCIIString(this.name!);
+    write(buf: SourceBuffer) {
+        buf.writeCString(this.name!);
 
-        buf.writeInt16(this.entries!.length!);
+        buf.writeInt16LE(this.entries!.length!);
         this.entries!.forEach((entry) => {
-            buf.writeASCIIString(entry.name!);
+            buf.writeCString(entry.name!);
 
             buf.writeBoolean(entry.dataBuffer !== undefined);
             if (entry.dataBuffer !== undefined) {
-                entry.write(buf, demo);
+                entry.write(buf);
             }
         });
 
         buf.writeBoolean(this.classes!.length !== 0);
         if (this.classes!.length !== 0) {
-            buf.writeInt16(this.classes!.length!);
+            buf.writeInt16LE(this.classes!.length!);
             this.classes!.forEach((entry) => {
-                buf.writeASCIIString(entry.name!);
+                buf.writeCString(entry.name!);
 
                 buf.writeBoolean(entry.data !== undefined);
                 if (entry.data !== undefined) {
@@ -72,30 +71,30 @@ export class StringTable {
 export class StringTableEntry {
     name: string;
     length?: number;
-    dataBuffer?: SourceDemoBuffer;
+    dataBuffer?: SourceBuffer;
     data?: StringTableEntries;
     constructor(name: string) {
         this.name = name;
     }
-    read(buf: SourceDemoBuffer, type: StringTableEntryType | undefined, demo: SourceDemo) {
-        this.length = buf.readInt16();
-        this.dataBuffer = buf.readBitStream(this.length * 8);
+    read(buf: SourceBuffer, type: StringTableEntryType | undefined) {
+        this.length = buf.readInt16LE();
+        this.dataBuffer = buf.readBuffer(this.length);
 
         if (type) {
             this.data = new type();
-            this.data.read(this.dataBuffer, demo);
+            this.data.read(this.dataBuffer);
         }
     }
-    write(buf: SourceDemoBuffer, demo: SourceDemo) {
-        buf.writeInt16(this.length!);
+    write(buf: SourceBuffer) {
+        buf.writeInt16LE(this.length!);
 
         if (this.data) {
-            const data = SourceDemoBuffer.allocate(this.length!);
-            this.data!.write(data, demo);
-            this.dataBuffer = data.clone();
+            const data = SourceBuffer.allocate(this.length!);
+            this.data!.write(data);
+            this.dataBuffer = data.reset();
         }
 
-        buf.writeBitStream(this.dataBuffer!, this.length! * 8);
+        buf.writeBuffer(this.dataBuffer!);
     }
 }
 
@@ -105,13 +104,13 @@ export class StringTableClass {
     constructor(name: string) {
         this.name = name;
     }
-    read(buf: SourceDemoBuffer) {
-        const length = buf.readInt16();
-        this.data = buf.readASCIIString(length);
+    read(buf: SourceBuffer) {
+        const length = buf.readInt16LE();
+        this.data = buf.readStringBuffer(length);
     }
-    write(buf: SourceDemoBuffer) {
-        buf.writeInt16(this.data!.length!);
-        buf.writeASCIIString(this.data!);
+    write(buf: SourceBuffer) {
+        buf.writeInt16LE(this.data!.length!);
+        buf.writeCString(this.data!);
     }
 }
 
@@ -128,43 +127,39 @@ export class PlayerInfo {
     isHltv?: boolean;
     customFiles?: [number, number, number, number];
     filesDownloaded?: number;
-    read(buf: SourceDemoBuffer, demo: SourceDemo) {
-        if (demo.isNewEngine()) {
-            this.version = buf.readInt32();
-            this.xuid = buf.readInt32();
-        }
-        this.name = buf.readASCIIString(32);
-        this.userId = buf.readInt32();
-        this.guid = buf.readASCIIString(32);
-        this.friendsId = buf.readInt32();
-        this.friendsName = buf.readASCIIString(32);
+    read(buf: SourceBuffer) {
+        this.version = buf.readInt32LE();
+        this.xuid = buf.readInt32LE();
+        this.name = buf.readStringBuffer(32);
+        this.userId = buf.readInt32LE();
+        this.guid = buf.readStringBuffer(32);
+        this.friendsId = buf.readInt32LE();
+        this.friendsName = buf.readStringBuffer(32);
         this.fakePlayer = buf.readBoolean();
         this.isHltv = buf.readBoolean();
         this.customFiles = [
-            buf.readInt32(),
-            buf.readInt32(),
-            buf.readInt32(),
-            buf.readInt32(),
+            buf.readInt32LE(),
+            buf.readInt32LE(),
+            buf.readInt32LE(),
+            buf.readInt32LE(),
         ];
-        this.filesDownloaded = buf.readInt32();
+        this.filesDownloaded = buf.readInt32LE();
     }
-    write(buf: SourceDemoBuffer, demo: SourceDemo) {
-        if (demo.isNewEngine()) {
-            buf.writeInt32(this.version!);
-            buf.writeInt32(this.xuid!);
-        }
-        buf.writeASCIIString(this.name!, 32);
-        buf.writeInt32(this.userId!);
-        buf.writeASCIIString(this.guid!, 32);
-        buf.writeInt32(this.friendsId!);
-        buf.writeASCIIString(this.friendsName!, 32);
+    write(buf: SourceBuffer) {
+        buf.writeInt32LE(this.version!);
+        buf.writeInt32LE(this.xuid!);
+        buf.writeStringBuffer(this.name!, 32);
+        buf.writeInt32LE(this.userId!);
+        buf.writeStringBuffer(this.guid!, 32);
+        buf.writeInt32LE(this.friendsId!);
+        buf.writeStringBuffer(this.friendsName!, 32);
         buf.writeBoolean(this.fakePlayer!);
         buf.writeBoolean(this.isHltv!);
-        buf.writeInt32(this.customFiles!.at(0)!),
-            buf.writeInt32(this.customFiles!.at(1)!),
-            buf.writeInt32(this.customFiles!.at(2)!),
-            buf.writeInt32(this.customFiles!.at(3)!),
-            buf.writeInt32(this.filesDownloaded!);
+        buf.writeInt32LE(this.customFiles!.at(0)!),
+            buf.writeInt32LE(this.customFiles!.at(1)!),
+            buf.writeInt32LE(this.customFiles!.at(2)!),
+            buf.writeInt32LE(this.customFiles!.at(3)!),
+            buf.writeInt32LE(this.filesDownloaded!);
     }
 }
 

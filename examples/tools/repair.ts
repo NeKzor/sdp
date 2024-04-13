@@ -13,8 +13,8 @@ import {
     Messages,
     NetMessages,
     ScoreboardTempUpdate,
+    SourceBuffer,
     SourceDemo,
-    SourceDemoBuffer,
     SourceDemoParser,
 } from '../../src/mod.ts';
 
@@ -54,7 +54,7 @@ try {
 }
 
 const tryFixup = () => {
-    const dt = demo.findMessage(Messages.DataTable)?.dataTable;
+    const dt = demo.findMessage(DemoMessages.DataTable)?.dataTable;
     if (!dt) {
         verbose && console.error('[-] Could not find DataTable!');
         return;
@@ -107,9 +107,9 @@ let coop = false;
 let coopCmEndTick = -1;
 let didPopulateCustomCallbackMap = false;
 
-const didCoopChallengeModeFinish = (message: Messages.Message) => {
+const didCoopChallengeModeFinish = (message: Messages.IMessage) => {
     // Start dropping messages on the next tick
-    const drop = coopCmEndTick !== -1 && message.tick! > coopCmEndTick;
+    const drop = coopCmEndTick !== -1 && message.tick > coopCmEndTick;
     if (verbose && drop) {
         console.log(
             '[+] Dropped message because coop challenge mode run finished at tick',
@@ -119,15 +119,15 @@ const didCoopChallengeModeFinish = (message: Messages.Message) => {
     return drop;
 };
 
-demo.messages = demo.messages!.filter((message) => {
-    if (message instanceof DemoMessages.Packet) {
+demo.messages = demo.messages.filter((message) => {
+    if (DemoMessages.Packet.matches(message)) {
         if (didCoopChallengeModeFinish(message)) {
             return false;
         }
 
         let pausePacketCount = 0;
 
-        for (const packet of message.packets!) {
+        for (const packet of message.packets) {
             if (packet instanceof NetMessages.SvcServerInfo) {
                 coop = (packet.maxClients ?? 0) !== 0;
             } else if (packet instanceof NetMessages.SvcSetPause) {
@@ -138,7 +138,7 @@ demo.messages = demo.messages!.filter((message) => {
                 packet instanceof NetMessages.SvcUserMessage &&
                 packet.userMessage instanceof ScoreboardTempUpdate
             ) {
-                coopCmEndTick = message.tick! + 60; // Add 1s delay
+                coopCmEndTick = message.tick + 60; // Add 1s delay
             }
         }
 
@@ -156,12 +156,9 @@ demo.messages = demo.messages!.filter((message) => {
         return !dropMessage;
     }
 
-    if (
-        message instanceof DemoMessages.UserCmd ||
-        message instanceof DemoMessages.CustomData
-    ) {
-        if (!didPopulateCustomCallbackMap && message instanceof DemoMessages.CustomData) {
-            didPopulateCustomCallbackMap = message.unk === -1;
+    if (DemoMessages.UserCmd.matches(message) || DemoMessages.CustomData.matches(message)) {
+        if (!didPopulateCustomCallbackMap && DemoMessages.CustomData.matches(message)) {
+            didPopulateCustomCallbackMap = message.callbackIndex === -1;
 
             if (!didPopulateCustomCallbackMap) {
                 verbose &&
@@ -180,7 +177,7 @@ demo.messages = demo.messages!.filter((message) => {
         return !paused;
     }
 
-    if (message instanceof DemoMessages.ConsoleCmd) {
+    if (DemoMessages.ConsoleCmd.matches(message)) {
         if (didCoopChallengeModeFinish(message)) {
             return false;
         }
@@ -189,21 +186,21 @@ demo.messages = demo.messages!.filter((message) => {
     return true;
 });
 
-const lastMessage = demo.messages!.at(-1);
-if (lastMessage && !(lastMessage instanceof Messages.Stop)) {
+const lastMessage = demo.messages.at(-1);
+if (lastMessage && !Messages.Stop.matches(lastMessage)) {
     verbose && console.log('[+] Replacing corrupted message at tick', lastMessage.tick);
 
     demo.detectGame()
         .adjustTicks()
         .adjustRange();
 
-    const stopMessage = new Messages.Stop(0x07)
-        .setTick(lastMessage.tick!)
-        .setSlot(lastMessage.slot!);
+    const stopMessage = Messages.Stop.create({
+        tick: lastMessage.tick,
+        slot: lastMessage.slot,
+        restData: SourceBuffer.allocate(0),
+    });
 
-    stopMessage.restData = new SourceDemoBuffer(new ArrayBuffer(0));
-
-    demo.messages![demo.messages!.length - 1] = stopMessage;
+    demo.messages[demo.messages.length - 1] = stopMessage;
 }
 
 const saved = parser

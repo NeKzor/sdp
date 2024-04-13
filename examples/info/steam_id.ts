@@ -24,7 +24,7 @@ try {
 demo.readStringTables();
 
 const message = demo.findMessage(Messages.StringTable);
-const isHost = demo.serverName!.startsWith('localhost');
+const isHost = demo.serverName.startsWith('localhost');
 
 const printResult = (entry: StringTableEntry) => {
     const [steamData, result] = getPlayerSteamData(entry);

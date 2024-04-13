@@ -67,17 +67,18 @@ export class SourceBuffer {
             this.buffer = new ArrayBuffer(this.buffer.byteLength * 2);
             this.view = new DataView(this.buffer);
             // FIXME: Use ArrayBuffer.prototype.transfer() once it comes out.
-            new Uint8Array(this.buffer).set(new Uint8Array(oldBuffer));
+            new Uint8Array(this.buffer).set(new Uint8Array(oldBuffer), 0);
         }
     }
 
     shrinkToFit(): void {
         if (this.bitOffset < this.allocatedBits) {
             const oldBuffer = this.buffer;
-            this.buffer = new ArrayBuffer((this.bitOffset * 8) + (((this.bitOffset % 8) === 0) ? 1 : 0));
+            const newLength = Math.ceil(this.bitOffset / 8);
+            this.buffer = new ArrayBuffer(newLength);
             this.view = new DataView(this.buffer);
             // FIXME: Use ArrayBuffer.prototype.transfer() once it comes out.
-            new Uint8Array(this.buffer).set(new Uint8Array(oldBuffer));
+            new Uint8Array(this.buffer).set(new Uint8Array(oldBuffer.slice(0, newLength)), 0);
         }
     }
 
@@ -345,7 +346,8 @@ export class SourceBuffer {
     }
     writeUint8(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setUint8(this.bitOffset * 8, value);
+            this.reallocIfNeeded(8);
+            this.view.setUint8(this.bitOffset / 8, value);
             this.bitOffset += 8;
         } else {
             this.setBitsLE(this.bitOffset, 8, value);
@@ -362,7 +364,8 @@ export class SourceBuffer {
     }
     writeInt8(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setInt8(this.bitOffset * 8, value);
+            this.reallocIfNeeded(8);
+            this.view.setInt8(this.bitOffset / 8, value);
             this.bitOffset += 8;
         } else {
             this.setBitsLE(this.bitOffset, 8, value);
@@ -380,7 +383,8 @@ export class SourceBuffer {
     }
     writeUint16LE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setUint16(this.bitOffset * 8, value, true);
+            this.reallocIfNeeded(16);
+            this.view.setUint16(this.bitOffset / 8, value, true);
             this.bitOffset += 16;
         } else {
             this.setBitsLE(this.bitOffset, 16, value);
@@ -397,7 +401,8 @@ export class SourceBuffer {
     }
     writeInt16LE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setInt16(this.bitOffset * 8, value, true);
+            this.reallocIfNeeded(16);
+            this.view.setInt16(this.bitOffset / 8, value, true);
             this.bitOffset += 16;
         } else {
             this.setBitsLE(this.bitOffset, 16, value);
@@ -414,7 +419,8 @@ export class SourceBuffer {
     }
     writeUint16BE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setUint16(this.bitOffset * 8, value, false);
+            this.reallocIfNeeded(16);
+            this.view.setUint16(this.bitOffset / 8, value, false);
             this.bitOffset += 16;
         } else {
             this.setBitsBE(this.bitOffset, 16, value);
@@ -431,7 +437,8 @@ export class SourceBuffer {
     }
     writeInt16BE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setInt16(this.bitOffset * 8, value, false);
+            this.reallocIfNeeded(16);
+            this.view.setInt16(this.bitOffset / 8, value, false);
             this.bitOffset += 16;
         } else {
             this.setBitsBE(this.bitOffset, 16, value);
@@ -449,7 +456,8 @@ export class SourceBuffer {
     }
     writeUint32LE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setUint32(this.bitOffset * 8, value, true);
+            this.reallocIfNeeded(32);
+            this.view.setUint32(this.bitOffset / 8, value, true);
             this.bitOffset += 32;
         } else {
             this.setBitsLE(this.bitOffset, 32, value);
@@ -466,7 +474,8 @@ export class SourceBuffer {
     }
     writeInt32LE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setInt32(this.bitOffset * 8, value, true);
+            this.reallocIfNeeded(32);
+            this.view.setInt32(this.bitOffset / 8, value, true);
             this.bitOffset += 32;
         } else {
             this.setBitsLE(this.bitOffset, 32, value);
@@ -483,7 +492,8 @@ export class SourceBuffer {
     }
     writeUint32BE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setUint32(this.bitOffset * 8, value, false);
+            this.reallocIfNeeded(32);
+            this.view.setUint32(this.bitOffset / 8, value, false);
             this.bitOffset += 32;
         } else {
             this.setBitsBE(this.bitOffset, 32, value);
@@ -500,7 +510,8 @@ export class SourceBuffer {
     }
     writeInt32BE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setInt32(this.bitOffset * 8, value, false);
+            this.reallocIfNeeded(32);
+            this.view.setInt32(this.bitOffset / 8, value, false);
             this.bitOffset += 32;
         } else {
             this.setBitsBE(this.bitOffset, 32, value);
@@ -518,7 +529,8 @@ export class SourceBuffer {
     }
     writeUint64LE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setBigUint64(this.bitOffset * 8, BigInt(value), true);
+            this.reallocIfNeeded(64);
+            this.view.setBigUint64(this.bitOffset / 8, BigInt(value), true);
             this.bitOffset += 64;
         } else {
             this.setBitsLE(this.bitOffset, 64, value);
@@ -535,7 +547,8 @@ export class SourceBuffer {
     }
     writeInt64LE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setBigInt64(this.bitOffset * 8, BigInt(value), true);
+            this.reallocIfNeeded(64);
+            this.view.setBigInt64(this.bitOffset / 8, BigInt(value), true);
             this.bitOffset += 64;
         } else {
             this.setBitsLE(this.bitOffset, 64, value);
@@ -552,7 +565,8 @@ export class SourceBuffer {
     }
     writeUint64BE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setBigUint64(this.bitOffset * 8, BigInt(value), false);
+            this.reallocIfNeeded(64);
+            this.view.setBigUint64(this.bitOffset / 8, BigInt(value), false);
             this.bitOffset += 64;
         } else {
             this.setBitsBE(this.bitOffset, 64, value);
@@ -569,7 +583,8 @@ export class SourceBuffer {
     }
     writeInt64BE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setBigInt64(this.bitOffset * 8, BigInt(value), false);
+            this.reallocIfNeeded(64);
+            this.view.setBigInt64(this.bitOffset / 8, BigInt(value), false);
             this.bitOffset += 64;
         } else {
             this.setBitsBE(this.bitOffset, 64, value);
@@ -593,7 +608,8 @@ export class SourceBuffer {
     }
     writeFloat32LE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setFloat32(this.bitOffset * 8, value, true);
+            this.reallocIfNeeded(32);
+            this.view.setFloat32(this.bitOffset / 8, value, true);
             this.bitOffset += 32;
         } else {
             this.setBitsLE(this.bitOffset, 32, value);
@@ -614,7 +630,8 @@ export class SourceBuffer {
     }
     writeFloat32BE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setFloat32(this.bitOffset * 8, value, false);
+            this.reallocIfNeeded(32);
+            this.view.setFloat32(this.bitOffset / 8, value, false);
             this.bitOffset += 32;
         } else {
             this.setBitsBE(this.bitOffset, 32, value);
@@ -636,7 +653,8 @@ export class SourceBuffer {
     }
     writeFloat64LE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setFloat64(this.bitOffset * 8, value, true);
+            this.reallocIfNeeded(64);
+            this.view.setFloat64(this.bitOffset / 8, value, true);
             this.bitOffset += 64;
         } else {
             this.setBitsLE(this.bitOffset, 64, value);
@@ -657,7 +675,8 @@ export class SourceBuffer {
     }
     writeFloat64BE(value: number): SourceBuffer {
         if ((this.bitOffset % 8) === 0) {
-            this.view.setFloat64(this.bitOffset * 8, value, false);
+            this.reallocIfNeeded(64);
+            this.view.setFloat64(this.bitOffset / 8, value, false);
             this.bitOffset += 64;
         } else {
             this.setBitsBE(this.bitOffset, 64, value);

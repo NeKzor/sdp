@@ -11,9 +11,9 @@ import { SourceGame } from './speedrun/games/SourceGame.ts';
 import { SourceGames } from './speedrun/games/mod.ts';
 
 export class SourceDemo {
-    demoFileStamp: string = '';
-    demoProtocol: number = 0;
-    networkProtocol: number = 0;
+    demoFileStamp: string = 'HL2DEMO';
+    demoProtocol: number = 4;
+    networkProtocol: number = 2001;
     serverName: string = '';
     clientName: string = '';
     mapName: string = '';

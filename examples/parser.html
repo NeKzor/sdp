@@ -513,7 +513,7 @@ SAR: ${formatTime(demo.sar.delta * demo.getIntervalPerTick())}`,
     initButtons();
 
     // Info Tab
-    let demo = null;
+    globalThis.demo = null;
     let commandsFilter = [];
     let commandsFilterTimeout = null;
     const displayInfo = () => {
@@ -586,14 +586,14 @@ SAR: ${formatTime(demo.sar.delta * demo.getIntervalPerTick())}`,
         }
     };
     const parseInfoFile = (file) => {
-        demo = null;
+        globalThis.demo = null;
         const fileInfo = {
             name: file.name,
         };
 
         const reader = new FileReader();
         reader.onload = (ev) => {
-            demo = tryParseDemo(ev);
+            globalThis.demo = tryParseDemo(ev);
             displayInfo();
             prepareInputs();
             drawInputs();
@@ -603,10 +603,10 @@ SAR: ${formatTime(demo.sar.delta * demo.getIntervalPerTick())}`,
     };
 
     // List Tab
-    let demos = [];
+    globalThis.demos = [];
     let sortByFileName = true;
     const infoListItem = (index) => {
-        demo = demos[index];
+        globalThis.demo = demos[index];
         displayInfo();
         prepareInputs();
         drawInputs();
@@ -620,7 +620,7 @@ SAR: ${formatTime(demo.sar.delta * demo.getIntervalPerTick())}`,
         displayViewPlot();
     };
     const removeListItem = (index) => {
-        demos = demos.filter((demo) => demo !== demos[index]);
+        globalThis.demos = demos.filter((demo) => demo !== demos[index]);
         displayList();
     };
     const displayList = () => {
@@ -631,11 +631,11 @@ SAR: ${formatTime(demo.sar.delta * demo.getIntervalPerTick())}`,
         let index = 0;
 
         if (sortByFileName) {
-            demos = demos.sort((a, b) => a.fileInfo.name.localeCompare(b.fileInfo.name, undefined, {
+            globalThis.demos = demos.sort((a, b) => a.fileInfo.name.localeCompare(b.fileInfo.name, undefined, {
                 numeric: true
             }));
         } else {
-            demos = demos.sort((a, b) => (a.fileInfo.index < b.fileInfo.index ? -1 : 1));
+            globalThis.demos = demos.sort((a, b) => (a.fileInfo.index < b.fileInfo.index ? -1 : 1));
         }
 
         for (const demo of demos) {
@@ -908,7 +908,7 @@ SAR: ${formatTime(demo.sar.delta * demo.getIntervalPerTick())}`,
         }
     });
     document.getElementById('add-info-view').addEventListener('click', (ev) => {
-        if (demo === null) {
+        if (globalThis.demo === null) {
             return;
         }
 
@@ -925,7 +925,7 @@ SAR: ${formatTime(demo.sar.delta * demo.getIntervalPerTick())}`,
         await parseListFiles(files);
     });
     document.getElementById('clear-list').addEventListener('click', () => {
-        demos = [];
+        globalThis.demos = [];
         listEntries.innerHTML = '<tr><td colspan="7">Drag & drop files here.</td></tr>';
     });
     document.getElementById('save-list').addEventListener('click', () => {
@@ -977,7 +977,7 @@ SAR: ${formatTime(demo.sar.delta * demo.getIntervalPerTick())}`,
         displayViewPlot();
     });
     document.getElementById('info-commands-filter').addEventListener('input', (ev) => {
-        if (demo === null) {
+        if (globalThis.demo === null) {
             return;
         }
 
@@ -1035,8 +1035,6 @@ SAR: ${formatTime(demo.sar.delta * demo.getIntervalPerTick())}`,
     );
 
     // Expose these globally.
-    globalThis.demo = demo;
-    globalThis.demos = demos;
     globalThis.parser = parser;
     globalThis.speedrunTimer = speedrunTimer;
     globalThis.sarTimer = sarTimer;

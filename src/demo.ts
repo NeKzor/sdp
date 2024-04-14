@@ -22,9 +22,9 @@ import { SourceGames } from './speedrun/games/mod.ts';
 type MessageInstance<T extends { create(...args: any): any }> = T extends { create(...args: any): infer R } ? R : any;
 
 export class SourceDemo {
-    demoFileStamp: string = '';
-    demoProtocol: number = 0;
-    networkProtocol: number = 0;
+    demoFileStamp: string = 'HL2DEMO';
+    demoProtocol: number = 4;
+    networkProtocol: number = 2001;
     serverName: string = '';
     clientName: string = '';
     mapName: string = '';

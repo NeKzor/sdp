@@ -112,6 +112,12 @@ export class SourceBuffer {
         check && callback(this);
         return this;
     }
+    repeat(times: number, callback: (buffer: SourceBuffer) => void): SourceBuffer {
+        while (times-- > 0) {
+            callback(this);
+        }
+        return this;
+    }
 
     peekArray(offset: number, bytes: number): Uint8Array {
         const value = new Uint8Array(bytes);

@@ -16,6 +16,7 @@ import {
     Messages,
     NetMessages,
     ScoreboardTempUpdate,
+    SourceDemo,
     SourceDemoBuffer,
     SourceDemoParser,
 } from '../src/mod.ts';
@@ -32,11 +33,28 @@ if (!file) {
 }
 
 const buffer = Deno.readFileSync(file);
-const parser = SourceDemoParser.default();
+const parser = SourceDemoParser.default()
+    .setOptions({ packets: true, dataTables: true });
 
-const demo = parser
-    .setOptions({ packets: true, dataTables: true })
-    .parse(buffer);
+const demo = SourceDemo.default();
+
+try {
+    const buf = parser.prepare(buffer);
+    demo.readHeader(buf)
+        .readMessages(buf);
+} catch (err) {
+    console.error(err);
+}
+try {
+    demo.readDataTables();
+} catch (err) {
+    console.error(err);
+}
+try {
+    demo.readPackets();
+} catch (err) {
+    console.error(err);
+}
 
 const tryFixup = () => {
     const dt = demo.findMessage(Messages.DataTable)?.dataTable;

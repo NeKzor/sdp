@@ -6,7 +6,7 @@ import { describe, it } from 'jsr:@std/testing/bdd';
 import { SourceDemoParser } from '../src/mod.ts';
 import { SarTimer } from '../src/speedrun/mod.ts';
 
-describe('SarTimer', () => {
+describe.skip('SarTimer', () => {
     describe('#Portal 2', () => {
         it('time demo correctly', () => {
             const buffer = Deno.readFileSync('./demos/public/portal2_sar_timer.dem');

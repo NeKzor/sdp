@@ -1,19 +1,20 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
 import { ConsoleCmd, UserCmd } from '../messages.ts';
-import { SourceDemo } from '../demo.ts';
+import type { SourceDemo } from '../demo.ts';
 
 export const ReplayHeader = 'sar-tas-replay v1.8\n';
 
 export class SarTimer {
-    static default() {
+    static default(): SarTimer {
         return new SarTimer();
     }
-    time(demo: SourceDemo) {
+    time(demo: SourceDemo): {
+        startTick: number | undefined;
+        endTick: number | undefined;
+        delta: number;
+    } | undefined {
         if (!demo.messages?.length) {
             throw new Error('Cannot adjust ticks without parsed messages.');
         }
@@ -47,10 +48,10 @@ export class SarReplay {
     constructor(size: number) {
         this.buffer = this.alloc(size).buffer;
     }
-    static default() {
+    static default(): SarReplay {
         return new SarReplay(0);
     }
-    convert(demos: SourceDemo[]) {
+    convert(demos: SourceDemo[]): ArrayBufferLike {
         this.writeString(ReplayHeader);
         this.writeInt32(demos.length);
 
@@ -73,10 +74,10 @@ export class SarReplay {
 
         return this.buffer;
     }
-    alloc(size: number) {
+    alloc(size: number): DataView {
         return new DataView(new ArrayBuffer(size));
     }
-    concat(buffers: ArrayBuffer[]) {
+    concat(buffers: ArrayBuffer[]): ArrayBufferLike {
         const array = new Uint8Array(
             buffers.reduce((sum, buffer) => (sum += buffer.byteLength), 0),
         );
@@ -89,28 +90,28 @@ export class SarReplay {
 
         return array.buffer;
     }
-    writeInt8(value: number) {
+    writeInt8(value: number): void {
         const data = this.alloc(1);
         const result = data.setInt8(value, 0);
         this.buffer = this.concat([this.buffer, data.buffer]);
         return result;
     }
-    writeInt16(value: number) {
+    writeInt16(value: number): void {
         const data = this.alloc(2);
         data.setInt16(value, 0, true);
         this.buffer = this.concat([this.buffer, data.buffer]);
     }
-    writeInt32(value: number) {
+    writeInt32(value: number): void {
         const data = this.alloc(4);
         data.setInt32(value, 0, true);
         this.buffer = this.concat([this.buffer, data.buffer]);
     }
-    writeFloat(value: number) {
+    writeFloat(value: number): void {
         const data = this.alloc(4);
         data.setFloat32(value, 0, true);
         this.buffer = this.concat([this.buffer, data.buffer]);
     }
-    writeString(value: string) {
+    writeString(value: string): void {
         const data = this.alloc(value.length);
         let offset = 0;
         for (const c of value) {

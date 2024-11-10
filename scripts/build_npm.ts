@@ -1,11 +1,8 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
-import { build, emptyDir } from 'https://deno.land/x/dnt@0.37.0/mod.ts';
-import { copy } from 'https://deno.land/std@0.191.0/fs/copy.ts';
+import { build, emptyDir } from 'jsr:@deno/dnt@0.41.3';
+import { copy } from 'jsr:@std/fs@1.0.5';
 
 const version = Deno.args[0];
 if (!version) {

@@ -1,10 +1,7 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
-import { BitStream, BitView } from './lib/bit-buffer.ts';
+import { BitStream, type BitView } from './lib/bit-buffer.ts';
 import { QAngle } from './types/QAngle.ts';
 import { Vector } from './types/Vector.ts';
 
@@ -16,54 +13,58 @@ export class SourceDemoBuffer extends BitStream {
     ) {
         super(source, byteOffset, byteLength);
     }
-    static from(buffer: SourceDemoBuffer) {
+    static from(buffer: SourceDemoBuffer): SourceDemoBuffer {
         const copy = new SourceDemoBuffer(buffer.view);
         copy._index = buffer._index;
         copy._startIndex = buffer._startIndex;
         copy._length = buffer._length;
         return copy;
     }
-    static allocate(bytes: number) {
+    static allocate(bytes: number): SourceDemoBuffer {
         return new SourceDemoBuffer(new ArrayBuffer(bytes));
     }
-    static allocateBits(bits: number) {
+    static allocateBits(bits: number): SourceDemoBuffer {
         if ((bits % 8) !== 0) {
             throw new Error('Number of bits to allocate is not aligned!');
         }
         return new SourceDemoBuffer(new ArrayBuffer(bits / 8));
     }
-    clone() {
+    clone(): SourceDemoBuffer {
         return new SourceDemoBuffer(this.view);
     }
-    reset() {
+    reset(): SourceDemoBuffer {
         this._index = this._startIndex;
         return this;
     }
-    readVector() {
+    // TODO: implementation
+    readVarInt32(): number {
+        throw new Error('Not implemented yet!');
+    }
+    readVector(): Vector {
         return new Vector(
             this.readFloat32(),
             this.readFloat32(),
             this.readFloat32(),
         );
     }
-    writeVector(vec: Vector) {
+    writeVector(vec: Vector): void {
         this.writeFloat32(vec.x!);
         this.writeFloat32(vec.y!);
         this.writeFloat32(vec.z!);
     }
-    readQAngle() {
+    readQAngle(): QAngle {
         return new QAngle(
             this.readFloat32(),
             this.readFloat32(),
             this.readFloat32(),
         );
     }
-    writeQAngle(ang: QAngle) {
+    writeQAngle(ang: QAngle): void {
         this.writeFloat32(ang.pitch!);
         this.writeFloat32(ang.yaw!);
         this.writeFloat32(ang.roll!);
     }
-    readCoord() {
+    readCoord(): number {
         const COORD_INTEGER_BITS = 14;
         const COORD_FRACTIONAL_BITS = 5;
         const COORD_DENOMINATOR = 1 << COORD_FRACTIONAL_BITS;
@@ -86,7 +87,7 @@ export class SourceDemoBuffer extends BitStream {
 
         return value;
     }
-    writeCoord(value: number) {
+    writeCoord(value: number): void {
         const COORD_INTEGER_BITS = 14;
         const COORD_FRACTIONAL_BITS = 5;
         const COORD_DENOMINATOR = 1 << COORD_FRACTIONAL_BITS;
@@ -111,7 +112,7 @@ export class SourceDemoBuffer extends BitStream {
             }
         }
     }
-    readVectorCoord() {
+    readVectorCoord(): Vector {
         const [x, y, z] = [
             this.readBoolean(),
             this.readBoolean(),
@@ -123,7 +124,7 @@ export class SourceDemoBuffer extends BitStream {
             z ? this.readCoord() : 0,
         );
     }
-    writeVectorCoord(vec: Vector) {
+    writeVectorCoord(vec: Vector): void {
         const COORD_FRACTIONAL_BITS = 5;
         const COORD_DENOMINATOR = 1 << COORD_FRACTIONAL_BITS;
         const COORD_RESOLUTION = 1.0 / COORD_DENOMINATOR;
@@ -142,17 +143,17 @@ export class SourceDemoBuffer extends BitStream {
         y && this.writeCoord(vec.y);
         z && this.writeCoord(vec.z);
     }
-    readAngles() {
+    readAngles(): QAngle {
         const { x, y, z } = this.readVectorCoord();
         return new QAngle(x, y, z);
     }
-    writeAngles(angle: QAngle) {
+    writeAngles(angle: QAngle): void {
         return this.writeVectorCoord(new Vector(angle.pitch, angle.yaw, angle.roll));
     }
-    readField(bits: number, fallbackValue = 0) {
+    readField(bits: number, fallbackValue = 0): number {
         return this.readBoolean() ? this.readBits(bits) : fallbackValue;
     }
-    writeField(field: number, bits: number, fallbackValue = 0) {
+    writeField(field: number, bits: number, fallbackValue = 0): void {
         this.writeBoolean(field !== fallbackValue);
         if (field !== fallbackValue) {
             this.writeBits(field, bits);
@@ -162,7 +163,7 @@ export class SourceDemoBuffer extends BitStream {
         bits: number,
         fallbackValue: number,
         callback: (bits: number) => void,
-    ) {
+    ): number | void {
         return this.readBoolean() ? callback(this.readBits(bits)) : fallbackValue;
     }
     writeFieldThen(
@@ -170,14 +171,14 @@ export class SourceDemoBuffer extends BitStream {
         bits: number,
         fallbackValue: number,
         callback: (bits: number) => void,
-    ) {
+    ): void {
         this.writeBoolean(field !== fallbackValue);
         if (field !== fallbackValue) {
             this.writeBits(field, bits);
             callback(field);
         }
     }
-    readBitStream(bitLength: number) {
+    override readBitStream(bitLength: number): SourceDemoBuffer {
         const slice = new SourceDemoBuffer(this._view);
         slice._startIndex = this._index;
         slice._index = this._index;
@@ -185,7 +186,7 @@ export class SourceDemoBuffer extends BitStream {
         this._index += bitLength;
         return slice;
     }
-    writeBitStream(stream: BitStream, length: number) {
+    override writeBitStream(stream: BitStream, length: number): void {
         if (!length) {
             length = stream.bitsLeft;
         }
@@ -200,7 +201,7 @@ export class SourceDemoBuffer extends BitStream {
             length -= bitsToWrite;
         }
     }
-    writeArrayBuffer(buffer: ArrayBuffer, byteLength: number) {
+    override writeArrayBuffer(buffer: ArrayBuffer, byteLength: number): void {
         this.writeBitStream(new SourceDemoBuffer(buffer), byteLength * 8);
     }
 }

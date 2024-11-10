@@ -1,4 +1,4 @@
-import { SourceDemoBuffer } from '../buffer.ts';
+import type { SourceDemoBuffer } from '../buffer.ts';
 
 export class GameEventDescriptor {
     eventId?: number;
@@ -35,10 +35,10 @@ export class GameEvent {
         this.descriptor = descriptor;
         this.dataKeys = new Map();
     }
-    get<T extends ReturnType<GameEvent['dataKeys']['get']>>(keyName: string) {
+    get<T extends ReturnType<GameEvent['dataKeys']['get']>>(keyName: string): T {
         return this.dataKeys.get(keyName) as T;
     }
-    set<T extends Parameters<GameEvent['dataKeys']['set']>['1']>(keyName: string, defaultValue: T) {
+    set<T extends Parameters<GameEvent['dataKeys']['set']>['1']>(keyName: string, defaultValue: T): T {
         this.dataKeys.set(keyName, defaultValue);
         return defaultValue;
     }
@@ -49,7 +49,7 @@ export class GameEventManager {
     constructor(gameEvents: GameEventDescriptor[]) {
         this.gameEvents = gameEvents;
     }
-    deserializeEvent(buf: SourceDemoBuffer) {
+    deserializeEvent(buf: SourceDemoBuffer): GameEvent {
         const eventId = buf.readBits(9);
 
         const descriptor = this.gameEvents.find(
@@ -90,7 +90,7 @@ export class GameEventManager {
 
         return event;
     }
-    serializeEvent(event: GameEvent, buf: SourceDemoBuffer) {
+    serializeEvent(event: GameEvent, buf: SourceDemoBuffer): GameEvent {
         buf.writeBits(event.descriptor.eventId!, 9);
 
         for (const [keyName, type] of event.descriptor.keys!.entries()) {

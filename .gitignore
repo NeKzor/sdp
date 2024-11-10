@@ -1,5 +1,10 @@
 .vscode/
 demos/private/
+demos/public/
+demos/public/error/
+demos/public/portal2_sp_wr/
+demos/public/*_repaired.dem
+examples/experimental/
 dist/
 npm/
 

@@ -1,14 +1,12 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
-import { assert, assertEquals } from 'https://deno.land/std@0.191.0/testing/asserts.ts';
-import { describe, it } from 'https://deno.land/std@0.191.0/testing/bdd.ts';
-import { DemoMessages, NetMessages, SourceDemoParser, SourceTimer } from '../src/mod.ts';
+import { assert, assertEquals } from 'jsr:@std/assert';
+import { describe, it } from 'jsr:@std/testing/bdd';
+import { DemoMessages, NetMessages, SourceDemoParser } from '../src/mod.ts';
 import { DataTable, Packet, StringTable, UserCmd } from '../src/messages.ts';
 import { ScoreboardTempUpdate } from '../src/types/UserMessages.ts';
+import { SourceTimer } from '../src/speedrun/mod.ts';
 
 describe('SourceDemoParser', () => {
     describe('#Portal', () => {
@@ -23,7 +21,7 @@ describe('SourceDemoParser', () => {
             assertEquals(demo.demoProtocol, 3);
             assertEquals(demo.networkProtocol, 15);
             assertEquals(demo.serverName, 'localhost:0');
-            assertEquals(demo.clientName, 'Can\'t Even');
+            assertEquals(demo.clientName, "Can't Even");
             assertEquals(demo.mapName, 'testchmb_a_00');
             assertEquals(demo.gameDirectory, 'portal');
             assertEquals(demo.playbackTime, 3.944999933242798);

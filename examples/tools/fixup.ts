@@ -1,14 +1,11 @@
-/*
- * Copyright (c) 2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- *
- * This fixes old Portal 2 demos to make them playable again.
- * Research based on: https://github.com/p2sr/demofixup
- */
+// Copyright (c) 2023-2024, NeKz
+// SPDX-License-Identifier: MIT
 
-import { basename, dirname, join } from 'https://deno.land/std@0.140.0/path/posix.ts';
-import { Messages, SourceDemoParser } from '../src/mod.ts';
+// This fixes old Portal 2 demos to make them playable again.
+// Research based on: https://github.com/p2sr/demofixup
+
+import { basename, dirname, join } from 'jsr:@std/path';
+import { Messages, SourceDemoParser } from '../../src/mod.ts';
 
 const file = Deno.args.at(0);
 if (!file) {

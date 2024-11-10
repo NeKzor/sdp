@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import { DemoMessages, SourceDemoParser } from '@nekz/sdp';
 
 const file = process.argv.at(2);
-
 if (!file) {
     console.error('demo path argument not specified!');
     process.exit(1);

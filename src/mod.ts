@@ -1,13 +1,6 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
-export * from './speedrun/games/mod.ts';
-export * from './speedrun/games/SourceGame.ts';
-export * from './speedrun/sar.ts';
-export * from './speedrun/timer.ts';
 export * from './types/CmdInfo.ts';
 export * as DataTables from './types/DataTables.ts';
 export * from './types/GameEventManager.ts';

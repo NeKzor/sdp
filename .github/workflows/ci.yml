@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: ['main']
+    paths:
+      - 'src/**/*.ts'
+      - 'tests/**/*.ts'
+  pull_request:
+    branches: ['main']
+    paths:
+      - 'src/**/*.ts'
+      - 'tests/**/*.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Format check
+        run: deno fmt --check
+
+      - name: Lint check
+        run: deno lint
+
+      - name: Type Check
+        run: deno task check:types
+
+      - name: Test
+        run: deno task test

@@ -1,11 +1,8 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
-import { assertEquals } from 'https://deno.land/std@0.191.0/testing/asserts.ts';
-import { describe, it } from 'https://deno.land/std@0.191.0/testing/bdd.ts';
+import { assertEquals } from 'jsr:@std/assert';
+import { describe, it } from 'jsr:@std/testing/bdd';
 import { SourceDemoBuffer } from '../src/buffer.ts';
 
 describe('SourceDemoBuffer', () => {

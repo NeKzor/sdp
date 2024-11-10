@@ -1,10 +1,7 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
-import { Vector } from '../../types/Vector.ts';
+import type { Vector } from '../../types/Vector.ts';
 
 export interface SourceGameRule {
     map?: string | string[];

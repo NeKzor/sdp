@@ -1,10 +1,7 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
-import { bundle } from 'https://deno.land/x/emit@0.24.0/mod.ts';
+import { bundle } from 'jsr:@deno/emit@0.46.0';
 
 // This is about 9 times slower than esbuild without minification lol.
 // However, both don't support npm specifiers but deno_emit will support them

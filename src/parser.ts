@@ -1,8 +1,5 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
 import { SourceDemoBuffer } from './buffer.ts';
 import { SourceDemo } from './demo.ts';
@@ -31,17 +28,17 @@ export class SourceDemoParser {
     constructor(options: ParsingOptions = DefaultParsingOptions) {
         this.options = options;
     }
-    static default() {
+    static default(): SourceDemoParser {
         return new this(DefaultParsingOptions);
     }
-    setOptions(options: Partial<ParsingOptions>) {
+    setOptions(options: Partial<ParsingOptions>): SourceDemoParser {
         this.options = {
             ...this.options,
             ...options,
         };
         return this;
     }
-    prepare(buffer: ArrayBuffer) {
+    prepare(buffer: ArrayBuffer): SourceDemoBuffer {
         const extended = new Uint8Array(
             buffer.byteLength + 4 - (buffer.byteLength % 4),
         );
@@ -49,7 +46,7 @@ export class SourceDemoParser {
 
         return new SourceDemoBuffer(extended.buffer);
     }
-    parse(buffer: ArrayBuffer) {
+    parse(buffer: ArrayBuffer): SourceDemo {
         const buf = this.prepare(buffer);
         const demo = SourceDemo.default();
 
@@ -65,7 +62,7 @@ export class SourceDemoParser {
 
         return demo;
     }
-    save(demo: SourceDemo, bufferSize: number) {
+    save(demo: SourceDemo, bufferSize: number): Uint8Array {
         if (!this.options.header || !this.options.header) {
             throw new Error('Cannot save demo without parsed header and messages.');
         }

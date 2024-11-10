@@ -1,5 +1,6 @@
-[![Deno CI](https://github.com/NeKzor/sdp/actions/workflows/deno.yml/badge.svg)](https://github.com/NeKzor/sdp/actions/workflows/deno.yml)
-[![Release CD](https://github.com/NeKzor/sdp/actions/workflows/release.yml/badge.svg)](https://github.com/NeKzor/sdp/actions/workflows/release.yml)
+[![CI](https://github.com/NeKzor/sdp/actions/workflows/ci.yml/badge.svg)](https://github.com/NeKzor/sdp/actions/workflows/ci.yml)
+[![CD](https://github.com/NeKzor/sdp/actions/workflows/cd.yml/badge.svg)](https://github.com/NeKzor/sdp/actions/workflows/cd.yml)
+[![jsr](https://jsr.io/badges/@nekz/sdp)](https://jsr.io/@nekz/sdp)
 [![npm](https://img.shields.io/npm/v/@nekz/sdp?color=blue)](https://www.npmjs.com/package/@nekz/sdp)
 
 # sdp
@@ -13,6 +14,7 @@ Simple Source Engine demo parser. Try it out on [StackBlitz]!
 - Support for multiple engines
   - Portal 2
   - Half-Life 2
+  - Custom engine, see [Strata Source example](./examples/custom/strata.ts)
 - Optional decoding of message data
   - [User command info]
   - [NET/SVC messages]
@@ -22,12 +24,15 @@ Simple Source Engine demo parser. Try it out on [StackBlitz]!
 - Speedrun timing
   - Rules for Portal, Portal 2 and mods
   - [SAR] timing
+- Utils
+  - Steam ID parsing
+  - SAR data
 
-[User command info]: https://nekz.me/dem/classes/usercmdinfo.html
-[NET/SVC messages]: https://nekz.me/dem/classes/netsvc.html
-[Send tables]: https://nekz.me/dem/classes/sendtable.html
-[String tables]: https://nekz.me/dem/classes/stringtable.html
-[Game events]: https://nekz.me/dem/classes/gameevent.html
+[User command info]: https://dem.nekz.me/dem/classes/usercmdinfo.html
+[NET/SVC messages]: https://dem.nekz.me/dem/classes/netsvc.html
+[Send tables]: https://dem.nekz.me/dem/classes/sendtable.html
+[String tables]: https://dem.nekz.me/dem/classes/stringtable.html
+[Game events]: https://dem.nekz.me/dem/classes/gameevent.html
 [SAR]: https://sar.portal2.sr
 
 ## Examples
@@ -37,7 +42,7 @@ Simple Source Engine demo parser. Try it out on [StackBlitz]!
 Using Deno + TypeScript:
 
 ```ts
-import { SourceDemoParser } from 'npm:@nekz/sdp';
+import { SourceDemoParser } from 'jsr:@nekz/sdp';
 
 const demo = SourceDemoParser.default()
     .setOptions({ messages: false })
@@ -87,20 +92,18 @@ console.log('registered jumps:', registeredJumps.length);
 */
 ```
 
-### Jump Stats
-
 The [examples directory](./examples/) contains more examples for Node and Deno.
 
 ### View Origin
 
 [![showcase.gif](showcase.gif)](https://nekz.me/parser)
 
-Used in [nekz.me/parser](https://nekz.me/parser). Updated example can be found in [examples/parser.html](./examples/parser.html).
+Used in [nekz.me/parser](https://nekz.me/parser).
+Updated example can be found in [examples/web/parser.html](./examples/web/parser.html).
 
-## Credits
+## Dependencies
 
-[inolen/bit-buffer] for `BitStream` and `BitView`. I ported it to TypeScript because Deno cannot bundle npm specifiers
-and any other bundler is not good enough. Also this port significantly improves typings which means less errors etc.
+Vendored [inolen/bit-buffer] for TypeScript port + improvements.
 
 [inolen/bit-buffer]: https://github.com/inolen/bit-buffer
 

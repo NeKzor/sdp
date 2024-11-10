@@ -1,11 +1,8 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
-import * as esbuild from 'https://deno.land/x/esbuild@v0.17.19/mod.js';
-import { denoPlugins } from 'https://deno.land/x/esbuild_deno_loader@0.8.1/mod.ts';
+import * as esbuild from 'npm:esbuild@0.24.0';
+import { denoPlugins } from 'jsr:@luca/esbuild-deno-loader@0.11.0';
 
 // Esbuild is fast! go > rust? I guess it's WASM...
 

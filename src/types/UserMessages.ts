@@ -1,23 +1,20 @@
-/*
- * Copyright (c) 2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2023-2024, NeKz
+// SPDX-License-Identifier: MIT
 
-import { SourceDemoBuffer } from '../buffer.ts';
-import { SourceDemo } from '../demo.ts';
-import { QAngle } from './QAngle.ts';
-import { Vector } from './Vector.ts';
+import type { SourceDemoBuffer } from '../buffer.ts';
+import type { SourceDemo } from '../demo.ts';
+import type { QAngle } from './QAngle.ts';
+import type { Vector } from './Vector.ts';
 
 export class UserMessage {
     type: number;
     constructor(type: number) {
         this.type = type;
     }
-    getType() {
+    getType(): number {
         return this.type;
     }
-    getName() {
+    getName(): string {
         return this.constructor.name;
     }
     read(_buf: SourceDemoBuffer, _demo: SourceDemo) {
@@ -26,35 +23,35 @@ export class UserMessage {
     write(_buf: SourceDemoBuffer, _demo: SourceDemo) {
         throw new Error(`write() for ${this.constructor.name} not implemented!`);
     }
-    as<T extends UserMessage>() {
+    as<T extends UserMessage>(): T {
         return this as unknown as T;
     }
 }
 
 export class Geiger extends UserMessage {
     geigerRange?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.geigerRange = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.geigerRange!);
     }
 }
 export class Train extends UserMessage {
     pos?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.pos = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.pos!);
     }
 }
 export class HudText extends UserMessage {
     text?: string;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.text = buf.readASCIIString();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeASCIIString(this.text!);
     }
 }
@@ -62,12 +59,12 @@ export class SayText extends UserMessage {
     client?: number;
     text?: string;
     wantsToChat?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.client = buf.readUint8();
         this.text = buf.readASCIIString();
         this.wantsToChat = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.client!);
         buf.writeASCIIString(this.text!);
         buf.writeUint8(this.wantsToChat!);
@@ -79,7 +76,7 @@ export class SayText2 extends UserMessage {
     wantsToChat?: number;
     messageText?: string;
     messages?: [string, string, string, string];
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.client = buf.readUint8();
         this.text = buf.readASCIIString();
         this.wantsToChat = buf.readUint8();
@@ -91,7 +88,7 @@ export class SayText2 extends UserMessage {
             buf.readASCIIString(),
         ];
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.client!);
         buf.writeASCIIString(this.text!);
         buf.writeUint8(this.wantsToChat!);
@@ -111,7 +108,7 @@ export enum HudPrint {
 export class TextMsg extends UserMessage {
     msgDest?: HudPrint;
     output?: [string, string, string, string, string];
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.msgDest = buf.readUint8();
         this.output = ['', '', '', '', ''];
 
@@ -119,7 +116,7 @@ export class TextMsg extends UserMessage {
             this.output[i] = buf.readASCIIString();
         }
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.msgDest!);
 
         for (const str of this.output!.values() ?? []) {
@@ -148,7 +145,7 @@ export interface HudTextParms {
 export class HudMsg extends UserMessage {
     textParms?: HudTextParms;
     message?: string;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.textParms = {
             channel: buf.readUint8(),
             x: buf.readFloat32(),
@@ -169,7 +166,7 @@ export class HudMsg extends UserMessage {
         };
         this.message = buf.readASCIIString();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.textParms!.channel);
         buf.writeFloat32(this.textParms!.x);
         buf.writeFloat32(this.textParms!.y);
@@ -191,30 +188,30 @@ export class HudMsg extends UserMessage {
 }
 export class ResetHUD extends UserMessage {
     reset?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.reset = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.reset!);
     }
 }
 export class GameTitle extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 export class ItemPickup extends UserMessage {
     name?: string;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.name = buf.readASCIIString();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeASCIIString(this.name!);
     }
 }
 // NOTE: Unused
 export class ShowMenu extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 export enum ShakeCommand {
     Start = 0,
@@ -229,13 +226,13 @@ export class Shake extends UserMessage {
     amplitude?: number;
     frequency?: number;
     duration?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.command = buf.readUint8();
         this.amplitude = buf.readFloat32();
         this.frequency = buf.readFloat32();
         this.duration = buf.readFloat32();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.command!);
         buf.writeFloat32(this.amplitude!);
         buf.writeFloat32(this.frequency!);
@@ -248,14 +245,14 @@ export class Tilt extends UserMessage {
     angle?: QAngle;
     duration?: number;
     time?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.command = buf.readUint8();
         this.easeInOut = buf.readUint8();
         this.angle = buf.readQAngle();
         this.duration = buf.readFloat32();
         this.time = buf.readFloat32();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.command!);
         buf.writeUint8(this.easeInOut!);
         buf.writeQAngle(this.angle!);
@@ -268,7 +265,7 @@ export class Fade extends UserMessage {
     holdTime?: number;
     fadeFlags?: number;
     fade?: { r: number; g: number; b: number; a: number };
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.duration = buf.readUint16();
         this.holdTime = buf.readUint16();
         this.fadeFlags = buf.readUint16();
@@ -279,7 +276,7 @@ export class Fade extends UserMessage {
             a: buf.readUint8(),
         };
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint16(this.duration!);
         buf.writeUint16(this.holdTime!);
         buf.writeUint16(this.fadeFlags!);
@@ -294,7 +291,7 @@ export class VGUIMenu extends UserMessage {
     show?: number;
     size?: number;
     keyValues?: { key: string; value: string }[];
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.name = buf.readASCIIString();
         this.show = buf.readUint8();
         this.size = buf.readUint8();
@@ -307,7 +304,7 @@ export class VGUIMenu extends UserMessage {
             });
         }
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeASCIIString(this.name!);
         buf.writeUint8(this.show!);
         buf.writeUint8(this.size!);
@@ -322,12 +319,12 @@ export class Rumble extends UserMessage {
     index?: number;
     data?: number;
     flags?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.index = buf.readUint8();
         this.data = buf.readUint8();
         this.flags = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.index!);
         buf.writeUint8(this.data!);
         buf.writeUint8(this.flags!);
@@ -335,23 +332,23 @@ export class Rumble extends UserMessage {
 }
 export class Battery extends UserMessage {
     battery?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.battery = buf.readUint16();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint16(this.battery!);
     }
 }
 // NOTE: Unused
 export class Damage extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 export class VoiceMask extends UserMessage {
     audiblePlayers?: [number, number];
     serverBannedPlayers?: [number, number];
     serverModEnabled?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         const VOICE_MAX_PLAYERS_DW = 2;
 
         this.audiblePlayers = [0, 0];
@@ -364,7 +361,7 @@ export class VoiceMask extends UserMessage {
 
         this.serverModEnabled = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         const VOICE_MAX_PLAYERS_DW = 2;
 
         for (let index = 0; index < VOICE_MAX_PLAYERS_DW; ++index) {
@@ -376,19 +373,19 @@ export class VoiceMask extends UserMessage {
     }
 }
 export class RequestState extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 export class CloseCaption extends UserMessage {
     hash?: number;
     duration?: number;
     fromPlayer?: boolean;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.hash = buf.readUint32();
         this.duration = buf.readBits(15, false);
         this.fromPlayer = buf.readBoolean();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint32(this.hash!);
         buf.writeBits(this.duration!, 15);
         buf.writeBoolean(this.fromPlayer!);
@@ -398,12 +395,12 @@ export class CloseCaptionDirect extends UserMessage {
     hash?: number;
     duration?: number;
     fromPlayer?: boolean;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.hash = buf.readUint32();
         this.duration = buf.readBits(15, false);
         this.fromPlayer = buf.readBoolean();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint32(this.hash!);
         buf.writeBits(this.duration!, 15);
         buf.writeBoolean(this.fromPlayer!);
@@ -411,37 +408,37 @@ export class CloseCaptionDirect extends UserMessage {
 }
 export class HintText extends UserMessage {
     hintString?: string;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.hintString = buf.readASCIIString();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeASCIIString(this.hintString!);
     }
 }
 export class KeyHintText extends UserMessage {
     messages?: 1;
     message?: string;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.messages = buf.readUint8() as 1;
         this.message = buf.readASCIIString();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.messages!);
         buf.writeASCIIString(this.message!);
     }
 }
 // NOTE: Unused
 export class SquadMemberDied extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 // NOTE: Unused
 export class AmmoDenied extends UserMessage {
     ammo?: number;
-    read(_buf: SourceDemoBuffer) {
+    override read(_buf: SourceDemoBuffer) {
         // this.ammo = buf.readUint16();
     }
-    write(_buf: SourceDemoBuffer) {
+    override write(_buf: SourceDemoBuffer) {
         // buf.writeUint16(this.ammo);
     }
 }
@@ -452,39 +449,39 @@ export enum CreditsType {
 }
 export class CreditsMsg extends UserMessage {
     creditsType?: CreditsType;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.creditsType = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.creditsType!);
     }
 }
 export class LogoTimeMsg extends UserMessage {
     time?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.time = buf.readFloat32();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeFloat32(this.time!);
     }
 }
 // NOTE: Unused
 export class AchievementEvent extends UserMessage {
     achievementId?: number;
-    read(_buf: SourceDemoBuffer) {
+    override read(_buf: SourceDemoBuffer) {
         // this.achievementId = buf.readUint16();
     }
-    write(_buf: SourceDemoBuffer) {
+    override write(_buf: SourceDemoBuffer) {
         // buf.writeUint16(this.achievementId);
     }
 }
 export class UpdateJalopyRadar extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 export class CurrentTimescale extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 export enum GameTimescaleInterpolators {
     Linear = 0,
@@ -497,13 +494,13 @@ export class DesiredTimescale extends UserMessage {
     durationRealTimeSeconds?: number;
     interpolationType?: GameTimescaleInterpolators;
     startBlendTime?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.desiredTimescale = buf.readFloat32();
         this.durationRealTimeSeconds = buf.readFloat32();
         this.interpolationType = buf.readUint8();
         this.startBlendTime = buf.readFloat32();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeFloat32(this.desiredTimescale!);
         buf.writeFloat32(this.durationRealTimeSeconds!);
         buf.writeUint8(this.interpolationType!);
@@ -518,51 +515,51 @@ export enum PortalCreditsType {
 }
 export class CreditsPortalMsg extends UserMessage {
     creditsType?: PortalCreditsType;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.creditsType = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.creditsType!);
     }
 }
 // NOTE: Unused
 export class InventoryFlash extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 // NOTE: Unused
 export class IndicatorFlash extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 // NOTE: Unused
 export class ControlHelperAnimate extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 // NOTE: Unused
 export class TakePhoto extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 // NOTE: Unused
 export class Flash extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 export class HudPingIndicator extends UserMessage {
     position?: Vector;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.position = buf.readVector();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeVector(this.position!);
     }
 }
 // NOTE: Unused
 export class OpenRadialMenu extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 // TODO
 export class AddLocator extends UserMessage {
@@ -572,7 +569,7 @@ export class AddLocator extends UserMessage {
     position?: Vector;
     normal?: Vector;
     iconName?: string;
-    read(_buf: SourceDemoBuffer) {
+    override read(_buf: SourceDemoBuffer) {
         // this.playerIndex = buf.readUint16();
         // this.entityHandle = buf.readUint32();
         // this.displayTime = buf.readFloat32();
@@ -580,7 +577,7 @@ export class AddLocator extends UserMessage {
         // this.normal = buf.readVector();
         // this.iconName = buf.readASCIIString();
     }
-    write(_buf: SourceDemoBuffer) {
+    override write(_buf: SourceDemoBuffer) {
         // buf.writeUint16(this.playerIndex!);
         // buf.writeUint32(this.entityHandle!);
         // buf.writeFloat32(this.displayTime!);
@@ -592,11 +589,11 @@ export class AddLocator extends UserMessage {
 export class MPMapCompleted extends UserMessage {
     branch?: number;
     level?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.branch = buf.readUint8();
         this.level = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.branch!);
         buf.writeUint8(this.level!);
     }
@@ -604,11 +601,11 @@ export class MPMapCompleted extends UserMessage {
 export class MPMapIncomplete extends UserMessage {
     branch?: number;
     level?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.branch = buf.readUint8();
         this.level = buf.readUint8();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint8(this.branch!);
         buf.writeUint8(this.level!);
     }
@@ -616,7 +613,7 @@ export class MPMapIncomplete extends UserMessage {
 // TODO
 export class MPMapCompletedData extends UserMessage {
     levelCompletions?: boolean[][][];
-    read(_buf: SourceDemoBuffer) {
+    override read(_buf: SourceDemoBuffer) {
         // const MAX_PORTAL2_COOP_BRANCHES = 6;
         // const MAX_PORTAL2_COOP_LEVELS_PER_BRANCH = 16;
         // const numBits = 2 * MAX_PORTAL2_COOP_BRANCHES * MAX_PORTAL2_COOP_LEVELS_PER_BRANCH;
@@ -648,7 +645,7 @@ export class MPMapCompletedData extends UserMessage {
         //     }
         // }
     }
-    write(_buf: SourceDemoBuffer) {
+    override write(_buf: SourceDemoBuffer) {
         // const MAX_PORTAL2_COOP_BRANCHES = 6;
         // const MAX_PORTAL2_COOP_LEVELS_PER_BRANCH = 16;
         // const numBits = 2 * MAX_PORTAL2_COOP_BRANCHES * MAX_PORTAL2_COOP_LEVELS_PER_BRANCH;
@@ -685,36 +682,36 @@ export class MPMapCompletedData extends UserMessage {
 export class MPTauntEarned extends UserMessage {
     taunt?: string;
     awardSilently?: boolean;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.taunt = buf.readASCIIString();
         this.awardSilently = buf.readBoolean();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeASCIIString(this.taunt!);
         buf.writeBoolean(this.awardSilently!);
     }
 }
 export class MPTauntUnlocked extends UserMessage {
     taunt?: string;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.taunt = buf.readASCIIString();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeASCIIString(this.taunt!);
     }
 }
 export class MPTauntLocked extends UserMessage {
     taunt?: string;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.taunt = buf.readASCIIString();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeASCIIString(this.taunt!);
     }
 }
 export class MPAllTauntsLocked extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 export enum PortalFizzleType {
     Success = 0,
@@ -738,7 +735,7 @@ export class PortalFX_Surface extends UserMessage {
     effect?: PortalFizzleType;
     vecOrigin?: Vector;
     angles?: QAngle;
-    read(_buf: SourceDemoBuffer) {
+    override read(_buf: SourceDemoBuffer) {
         // this.entIndex = buf.readInt16();
         // this.playerEntIndex = buf.readInt16();
         // this.team = buf.readInt8();
@@ -747,7 +744,7 @@ export class PortalFX_Surface extends UserMessage {
         // this.vecOrigin = buf.readVectorCoord();
         // this.angles = buf.readAngles();
     }
-    write(_buf: SourceDemoBuffer) {
+    override write(_buf: SourceDemoBuffer) {
         // buf.writeInt16(this.entIndex!);
         // buf.writeInt16(this.playerEntIndex!);
         // buf.writeInt8(this.team!);
@@ -764,14 +761,14 @@ export class PaintWorld extends UserMessage {
     unk3?: number;
     unk4?: number;
     unk5?: number;
-    read(_buf: SourceDemoBuffer) {
+    override read(_buf: SourceDemoBuffer) {
         // this.unk1 = buf.readUint8();
         // this.unk2 = buf.readUint32();
         // this.unk3 = buf.readFloat32();
         // this.unk4 = buf.readFloat32();
         // this.unk5 = buf.readUint8();
     }
-    write(_buf: SourceDemoBuffer) {
+    override write(_buf: SourceDemoBuffer) {
         // buf.writeUint8(this.unk1!);
         // buf.writeUint32(this.unk2!);
         // buf.writeFloat32(this.unk3!);
@@ -786,14 +783,14 @@ export class PaintEntity extends UserMessage {
     unk3?: number;
     unk4?: number;
     unk5?: number;
-    read(_buf: SourceDemoBuffer) {
+    override read(_buf: SourceDemoBuffer) {
         // this.unk1 = buf.readUint32();
         // this.unk2 = buf.readUint8();
         // this.unk3 = buf.readFloat32();
         // this.unk4 = buf.readFloat32();
         // this.unk5 = buf.readFloat32();
     }
-    write(_buf: SourceDemoBuffer) {
+    override write(_buf: SourceDemoBuffer) {
         // buf.writeUint32(this.unk1!);
         // buf.writeUint8(this.unk2!);
         // buf.writeFloat32(this.unk3!);
@@ -805,40 +802,40 @@ export class PaintEntity extends UserMessage {
 export class ChangePaintColor extends UserMessage {
     unk1?: number;
     unk2?: number;
-    read(_buf: SourceDemoBuffer) {
+    override read(_buf: SourceDemoBuffer) {
         // this.unk1 = buf.readUint32();
         // this.unk2 = buf.readUint8();
     }
-    write(_buf: SourceDemoBuffer) {
+    override write(_buf: SourceDemoBuffer) {
         // buf.writeUint32(this.unk1!);
         // buf.writeUint8(this.unk2!);
     }
 }
 // NOTE: Unused
 export class PaintBombExplode extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 export class RemoveAllPaint extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 // NOTE: Unused
 export class PaintAllSurfaces extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 export class RemovePaint extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 // NOTE: Unused
 export class StartSurvey extends UserMessage {
     handle?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.handle = buf.readUint32();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint32(this.handle!);
     }
 }
@@ -847,12 +844,12 @@ export class ApplyHitBoxDamageEffect extends UserMessage {
     entityHandle?: number;
     effectIndex?: number;
     hits?: number;
-    read(_buf: SourceDemoBuffer) {
+    override read(_buf: SourceDemoBuffer) {
         // this.entityHandle = buf.readUint32();
         // this.effectIndex = buf.readUint8();
         // this.hits = buf.readUint8();
     }
-    write(_buf: SourceDemoBuffer) {
+    override write(_buf: SourceDemoBuffer) {
         // buf.writeUint32(this.entityHandle!);
         // buf.writeUint8(this.effectIndex!);
         // buf.writeUint8(this.hits!);
@@ -862,12 +859,12 @@ export class SetMixLayerTriggerFactor extends UserMessage {
     layer?: string;
     group?: string;
     factor?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.layer = buf.readASCIIString();
         this.group = buf.readASCIIString();
         this.factor = buf.readFloat32();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeASCIIString(this.layer!);
         buf.writeASCIIString(this.group!);
         buf.writeFloat32(this.factor!);
@@ -875,32 +872,32 @@ export class SetMixLayerTriggerFactor extends UserMessage {
 }
 export class TransitionFade extends UserMessage {
     fade?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.fade = buf.readFloat32();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeFloat32(this.fade!);
     }
 }
 export class ScoreboardTempUpdate extends UserMessage {
     portalScore?: number;
     timeScore?: number;
-    read(buf: SourceDemoBuffer) {
+    override read(buf: SourceDemoBuffer) {
         this.portalScore = buf.readUint32();
         this.timeScore = buf.readUint32();
     }
-    write(buf: SourceDemoBuffer) {
+    override write(buf: SourceDemoBuffer) {
         buf.writeUint32(this.portalScore!);
         buf.writeUint32(this.timeScore!);
     }
 }
 export class ChallengeModeCheatSession extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 export class ChallengeModeCloseAllUI extends UserMessage {
-    read(_buf: SourceDemoBuffer) {}
-    write(_buf: SourceDemoBuffer) {}
+    override read(_buf: SourceDemoBuffer) {}
+    override write(_buf: SourceDemoBuffer) {}
 }
 
 export const UserMessages = {

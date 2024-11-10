@@ -2,7 +2,7 @@
  * MIT License
  *
  * Copyright (c) 2020, bit-buffer developers
- * Copyright (c) 2023, NeKz
+ * Copyright (c) 2023-2024, NeKz
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -62,25 +62,25 @@ export class BitView {
 
     // Used to massage fp values so we can operate on them
     // at the bit level.
-    _scratch = new DataView(new ArrayBuffer(8));
+    _scratch: DataView = new DataView(new ArrayBuffer(8));
 
-    get buffer() {
+    get buffer(): ArrayBufferLike {
         return this._view.buffer;
     }
 
-    get byteLength() {
+    get byteLength(): number {
         return this._view.length;
     }
 
-    _setBit(offset: number, on: boolean) {
+    _setBit(offset: number, on: boolean): void {
         if (on) {
-            this._view[offset >> 3] |= 1 << (offset & 7);
+            this._view[offset >> 3]! |= 1 << (offset & 7);
         } else {
-            this._view[offset >> 3] &= ~(1 << (offset & 7));
+            this._view[offset >> 3]! &= ~(1 << (offset & 7));
         }
     }
 
-    getBits(offset: number, bits: number, signed?: boolean) {
+    getBits(offset: number, bits: number, signed?: boolean): number {
         const available = this._view.length * 8 - offset;
 
         if (bits > available) {
@@ -133,7 +133,7 @@ export class BitView {
         return value >>> 0;
     }
 
-    setBits(offset: number, value: number, bits: number) {
+    setBits(offset: number, value: number, bits: number): void {
         const available = this._view.length * 8 - offset;
 
         if (bits > available) {
@@ -177,69 +177,69 @@ export class BitView {
         }
     }
 
-    getBoolean(offset: number) {
+    getBoolean(offset: number): boolean {
         return this.getBits(offset, 1, false) !== 0;
     }
-    getInt8(offset: number) {
+    getInt8(offset: number): number {
         return this.getBits(offset, 8, true);
     }
-    getUint8(offset: number) {
+    getUint8(offset: number): number {
         return this.getBits(offset, 8, false);
     }
-    getInt16(offset: number) {
+    getInt16(offset: number): number {
         return this.getBits(offset, 16, true);
     }
-    getUint16(offset: number) {
+    getUint16(offset: number): number {
         return this.getBits(offset, 16, false);
     }
-    getInt32(offset: number) {
+    getInt32(offset: number): number {
         return this.getBits(offset, 32, true);
     }
-    getUint32(offset: number) {
+    getUint32(offset: number): number {
         return this.getBits(offset, 32, false);
     }
-    getFloat32(offset: number) {
+    getFloat32(offset: number): number {
         this._scratch.setUint32(0, this.getUint32(offset));
         return this._scratch.getFloat32(0);
     }
-    getFloat64(offset: number) {
+    getFloat64(offset: number): number {
         this._scratch.setUint32(0, this.getUint32(offset));
         // DataView offset is in bytes.
         this._scratch.setUint32(4, this.getUint32(offset + 32));
         return this._scratch.getFloat64(0);
     }
 
-    setBoolean(offset: number, value: boolean) {
+    setBoolean(offset: number, value: boolean): void {
         this.setBits(offset, value ? 1 : 0, 1);
     }
-    setInt8(offset: number, value: number) {
+    setInt8(offset: number, value: number): void {
         this.setBits(offset, value, 8);
     }
-    setUint8(offset: number, value: number) {
+    setUint8(offset: number, value: number): void {
         this.setBits(offset, value, 8);
     }
-    setInt16(offset: number, value: number) {
+    setInt16(offset: number, value: number): void {
         this.setBits(offset, value, 16);
     }
-    setUint16(offset: number, value: number) {
+    setUint16(offset: number, value: number): void {
         this.setBits(offset, value, 16);
     }
-    setInt32(offset: number, value: number) {
+    setInt32(offset: number, value: number): void {
         this.setBits(offset, value, 32);
     }
-    setUint32(offset: number, value: number) {
+    setUint32(offset: number, value: number): void {
         this.setBits(offset, value, 32);
     }
-    setFloat32(offset: number, value: number) {
+    setFloat32(offset: number, value: number): void {
         this._scratch.setFloat32(0, value);
         this.setBits(offset, this._scratch.getUint32(0), 32);
     }
-    setFloat64(offset: number, value: number) {
+    setFloat64(offset: number, value: number): void {
         this._scratch.setFloat64(0, value);
         this.setBits(offset, this._scratch.getUint32(0), 32);
         this.setBits(offset + 32, this._scratch.getUint32(4), 32);
     }
-    getArrayBuffer(offset: number, byteLength: number) {
+    getArrayBuffer(offset: number, byteLength: number): Uint8Array {
         const buffer = new Uint8Array(byteLength);
         for (let i = 0; i < byteLength; ++i) {
             buffer[i] = this.getUint8(offset + i * 8);
@@ -312,42 +312,42 @@ export class BitStream {
     protected _startIndex: number;
     protected _length: number;
 
-    get offset() {
+    get offset(): number {
         return this._index;
     }
-    get index() {
+    get index(): number {
         return this._index - this._startIndex;
     }
     set index(val: number) {
         this._index = val + this._startIndex;
     }
 
-    get length() {
+    get length(): number {
         return this._length - this._startIndex;
     }
     set length(val: number) {
         this._length = val + this._startIndex;
     }
 
-    get bitsLeft() {
+    get bitsLeft(): number {
         return this._length - this._index;
     }
 
     // Ceil the returned value, over compensating for the amount of
     // bits written to the stream.
-    get byteIndex() {
+    get byteIndex(): number {
         return Math.ceil(this._index / 8);
     }
     set byteIndex(val: number) {
         this._index = val * 8;
     }
-    get buffer() {
+    get buffer(): ArrayBufferLike {
         return this._view.buffer;
     }
-    get view() {
+    get view(): BitView {
         return this._view;
     }
-    get bigEndian() {
+    get bigEndian(): boolean {
         return this._view.bigEndian;
     }
     set bigEndian(val: boolean) {
@@ -357,7 +357,7 @@ export class BitStream {
     protected reader<
         T extends number | boolean,
         F extends (offset: number) => T = (offset: number) => T,
-    >(name: keyof BitView, size: number) {
+    >(name: keyof BitView, size: number): () => T {
         return () => {
             if (this._index + size > this._length) {
                 throw new Error('Trying to read past the end of the stream');
@@ -376,7 +376,7 @@ export class BitStream {
             offset: number,
             value: T,
         ) => void,
-    >(name: keyof BitView, size: number) {
+    >(name: keyof BitView, size: number): (value: T) => void {
         return (value: T) => {
             (this._view as unknown as Record<keyof BitView, F>)[name](
                 this._index,
@@ -386,7 +386,7 @@ export class BitStream {
         };
     }
 
-    protected readString(bytes?: number, utf8?: boolean) {
+    protected readString(bytes?: number, utf8?: boolean): string {
         if (bytes === 0) {
             return '';
         }
@@ -431,54 +431,54 @@ export class BitStream {
         }
     }
 
-    readBits(bits: number, signed?: boolean) {
+    readBits(bits: number, signed?: boolean): number {
         const val = this._view.getBits(this._index, bits, signed);
         this._index += bits;
         return val;
     }
-    peakBits(offset: number, bits: number, signed?: boolean) {
+    peakBits(offset: number, bits: number, signed?: boolean): number {
         const val = this._view.getBits(offset, bits, signed);
         return val;
     }
-    writeBits(value: number, bits: number) {
+    writeBits(value: number, bits: number): void {
         this._view.setBits(this._index, value, bits);
         this._index += bits;
     }
 
-    readBoolean = this.reader<boolean>('getBoolean', 1);
-    readInt8 = this.reader<number>('getInt8', 8);
-    readUint8 = this.reader<number>('getUint8', 8);
-    readInt16 = this.reader<number>('getInt16', 16);
-    readUint16 = this.reader<number>('getUint16', 16);
-    readInt32 = this.reader<number>('getInt32', 32);
-    readUint32 = this.reader<number>('getUint32', 32);
-    readFloat32 = this.reader<number>('getFloat32', 32);
-    readFloat64 = this.reader<number>('getFloat64', 64);
+    readBoolean: () => boolean = this.reader<boolean>('getBoolean', 1);
+    readInt8: () => number = this.reader<number>('getInt8', 8);
+    readUint8: () => number = this.reader<number>('getUint8', 8);
+    readInt16: () => number = this.reader<number>('getInt16', 16);
+    readUint16: () => number = this.reader<number>('getUint16', 16);
+    readInt32: () => number = this.reader<number>('getInt32', 32);
+    readUint32: () => number = this.reader<number>('getUint32', 32);
+    readFloat32: () => number = this.reader<number>('getFloat32', 32);
+    readFloat64: () => number = this.reader<number>('getFloat64', 64);
 
-    writeBoolean = this.writer<boolean>('setBoolean', 1);
-    writeInt8 = this.writer<number>('setInt8', 8);
-    writeUint8 = this.writer<number>('setUint8', 8);
-    writeInt16 = this.writer<number>('setInt16', 16);
-    writeUint16 = this.writer<number>('setUint16', 16);
-    writeInt32 = this.writer<number>('setInt32', 32);
-    writeUint32 = this.writer<number>('setUint32', 32);
-    writeFloat32 = this.writer<number>('setFloat32', 32);
-    writeFloat64 = this.writer<number>('setFloat64', 64);
+    writeBoolean: (value: boolean) => void = this.writer<boolean>('setBoolean', 1);
+    writeInt8: (value: number) => void = this.writer<number>('setInt8', 8);
+    writeUint8: (value: number) => void = this.writer<number>('setUint8', 8);
+    writeInt16: (value: number) => void = this.writer<number>('setInt16', 16);
+    writeUint16: (value: number) => void = this.writer<number>('setUint16', 16);
+    writeInt32: (value: number) => void = this.writer<number>('setInt32', 32);
+    writeUint32: (value: number) => void = this.writer<number>('setUint32', 32);
+    writeFloat32: (value: number) => void = this.writer<number>('setFloat32', 32);
+    writeFloat64: (value: number) => void = this.writer<number>('setFloat64', 64);
 
-    readASCIIString(bytes?: number) {
+    readASCIIString(bytes?: number): string {
         return this.readString(bytes, false);
     }
-    readUTF8String(bytes?: number) {
+    readUTF8String(bytes?: number): string {
         return this.readString(bytes, true);
     }
-    writeASCIIString(string: string, bytes?: number) {
+    writeASCIIString(string: string, bytes?: number): void {
         const length = bytes || string.length + 1; // + 1 for NULL
 
         for (let i = 0; i < length; ++i) {
             this.writeUint8(i < string.length ? string.charCodeAt(i) : 0x00);
         }
     }
-    writeUTF8String(string: string, bytes: number) {
+    writeUTF8String(string: string, bytes: number): void {
         const byteArray = stringToByteArray(string);
 
         const length = bytes || byteArray.length + 1; // + 1 for NULL
@@ -486,7 +486,7 @@ export class BitStream {
             this.writeUint8(i < byteArray.length ? byteArray[i]! : 0x00);
         }
     }
-    readBitStream(bitLength: number) {
+    readBitStream(bitLength: number): BitStream {
         const slice = new BitStream(this._view);
         slice._startIndex = this._index;
         slice._index = this._index;
@@ -494,7 +494,7 @@ export class BitStream {
         this._index += bitLength;
         return slice;
     }
-    writeBitStream(stream: BitStream, length: number) {
+    writeBitStream(stream: BitStream, length: number): void {
         if (!length) {
             length = stream.bitsLeft;
         }
@@ -506,12 +506,12 @@ export class BitStream {
             length -= bitsToWrite;
         }
     }
-    readArrayBuffer(byteLength: number) {
+    readArrayBuffer(byteLength: number): Uint8Array {
         const buffer = this._view.getArrayBuffer(this._index, byteLength);
         this._index += byteLength * 8;
         return buffer;
     }
-    writeArrayBuffer(buffer: ArrayBuffer, byteLength: number) {
+    writeArrayBuffer(buffer: ArrayBuffer, byteLength: number): void {
         this.writeBitStream(new BitStream(buffer), byteLength * 8);
     }
 }

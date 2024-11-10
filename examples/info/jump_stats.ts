@@ -1,7 +1,6 @@
-import { DemoMessages, SourceDemoParser } from 'npm:@nekz/sdp';
+import { DemoMessages, SourceDemoParser } from '../../src/mod.ts';
 
 const file = Deno.args.at(0);
-
 if (!file) {
     console.error('demo path argument not specified!');
     Deno.exit(1);

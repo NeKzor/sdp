@@ -1,8 +1,5 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
 import { DataTable, DemoMessages, Message, Packet, SyncTick } from './messages.ts';
 import { SendTable, ServerClassInfo } from './types/DataTables.ts';
@@ -10,8 +7,8 @@ import { NetMessage, NetMessages } from './types/NetMessages.ts';
 import { StringTable } from './types/StringTables.ts';
 import { UserCmd } from './types/UserCmd.ts';
 import { SourceDemoBuffer } from './buffer.ts';
-import { GameEventManager } from './types/GameEventManager.ts';
-import { SourceGame } from './speedrun/games/SourceGame.ts';
+import type { GameEventManager } from './types/GameEventManager.ts';
+import type { SourceGame } from './speedrun/games/SourceGame.ts';
 import { SourceGames } from './speedrun/games/mod.ts';
 
 export const Portal2EngineGameMods = [
@@ -39,25 +36,27 @@ export class SourceDemo {
     game?: SourceGame;
     gameEventManager?: GameEventManager;
     isPortal2Engine = false;
-    static default() {
+    static default(): SourceDemo {
         return new this();
     }
-    isNewEngine() {
+    isNewEngine(): boolean {
         return this.demoProtocol === 4;
     }
-    findMessage<T extends Message>(type: (new (type: number) => T) | ((msg: Message) => boolean)) {
+    findMessage<T extends Message>(type: (new (type: number) => T) | ((msg: Message) => boolean)): T | undefined {
         const byType = type.prototype instanceof Message
             ? (msg: Message) => msg instanceof type
             : (msg: Message) => (type as unknown as (msg: Message) => boolean)(msg);
         return (this.messages ?? []).find(byType) as T | undefined;
     }
-    findMessages<T extends Message>(type: (new (type: number) => T) | ((msg: Message) => boolean)) {
+    findMessages<T extends Message>(type: (new (type: number) => T) | ((msg: Message) => boolean)): T[] {
         const byType = type.prototype instanceof Message
             ? (msg: Message) => msg instanceof type
             : (msg: Message) => (type as unknown as (msg: Message) => boolean)(msg);
         return (this.messages ?? []).filter(byType) as T[];
     }
-    findPacket<T extends NetMessage>(type: (new (type: number) => T) | ((packet: NetMessage) => boolean)) {
+    findPacket<T extends NetMessage>(
+        type: (new (type: number) => T) | ((packet: NetMessage) => boolean),
+    ): T | undefined {
         const byType = type.prototype instanceof NetMessage
             ? (packet: NetMessage) => packet instanceof type
             : (packet: NetMessage) => (type as unknown as (msg: NetMessage) => boolean)(packet);
@@ -71,7 +70,7 @@ export class SourceDemo {
             }
         }
     }
-    findPackets<T extends NetMessage>(type: (new (type: number) => T) | ((packet: NetMessage) => boolean)) {
+    findPackets<T extends NetMessage>(type: (new (type: number) => T) | ((packet: NetMessage) => boolean)): T[] {
         const isType = type.prototype instanceof NetMessage
             ? (packet: NetMessage) => packet instanceof type
             : (packet: NetMessage) => (type as unknown as (msg: NetMessage) => boolean)(packet);
@@ -88,7 +87,7 @@ export class SourceDemo {
         }
         return packets;
     }
-    readHeader(buf: SourceDemoBuffer) {
+    readHeader(buf: SourceDemoBuffer): SourceDemo {
         this.demoFileStamp = buf.readASCIIString(8);
         if (this.demoFileStamp !== 'HL2DEMO') {
             throw new Error(`Invalid demo file stamp: ${this.demoFileStamp}`);
@@ -107,7 +106,7 @@ export class SourceDemo {
         this.isPortal2Engine = Portal2EngineGameMods.includes(this.gameDirectory);
         return this;
     }
-    writeHeader(buf: SourceDemoBuffer) {
+    writeHeader(buf: SourceDemoBuffer): SourceDemo {
         buf.writeASCIIString(this.demoFileStamp!);
         buf.writeInt32(this.demoProtocol!);
         buf.writeInt32(this.networkProtocol!);
@@ -121,7 +120,7 @@ export class SourceDemo {
         buf.writeInt32(this.signOnLength!);
         return this;
     }
-    readMessages(buf: SourceDemoBuffer) {
+    readMessages(buf: SourceDemoBuffer): SourceDemo {
         if (!this.messages) {
             this.messages = [];
         }
@@ -147,7 +146,7 @@ export class SourceDemo {
 
         return this;
     }
-    writeMessages(buf: SourceDemoBuffer) {
+    writeMessages(buf: SourceDemoBuffer): void {
         (this.messages ?? []).forEach((message) => {
             buf.writeInt8(message.type);
             buf.writeInt32(message.tick!);
@@ -159,7 +158,7 @@ export class SourceDemo {
             message.write(buf, this);
         });
     }
-    readUserCmds() {
+    readUserCmds(): SourceDemo {
         for (const message of this.messages ?? []) {
             if (message instanceof DemoMessages.UserCmd) {
                 const data = SourceDemoBuffer.from(message.data!);
@@ -175,7 +174,7 @@ export class SourceDemo {
 
         return this;
     }
-    writeUserCmds() {
+    writeUserCmds(): SourceDemo {
         for (const message of this.messages ?? []) {
             if (message instanceof DemoMessages.UserCmd && message.userCmd) {
                 const data = SourceDemoBuffer.allocateBits(message.data!.length);
@@ -191,7 +190,7 @@ export class SourceDemo {
 
         return this;
     }
-    readStringTables() {
+    readStringTables(): SourceDemo {
         for (const message of this.messages ?? []) {
             if (message instanceof DemoMessages.StringTable) {
                 const stringTables = [];
@@ -215,7 +214,7 @@ export class SourceDemo {
 
         return this;
     }
-    writeStringTables() {
+    writeStringTables(): SourceDemo {
         for (const message of this.messages ?? []) {
             if (message instanceof DemoMessages.StringTable && message.stringTables) {
                 const data = SourceDemoBuffer.allocateBits(message.data!.length);
@@ -236,7 +235,7 @@ export class SourceDemo {
 
         return this;
     }
-    readDataTables() {
+    readDataTables(): SourceDemo {
         for (const message of this.messages ?? []) {
             if (message instanceof DataTable) {
                 const dataTable: {
@@ -274,7 +273,7 @@ export class SourceDemo {
 
         return this;
     }
-    writeDataTables() {
+    writeDataTables(): SourceDemo {
         for (const message of this.messages ?? []) {
             if (message instanceof DataTable && message.dataTable) {
                 const data = SourceDemoBuffer.allocateBits(message.data!.length);
@@ -300,7 +299,7 @@ export class SourceDemo {
 
         return this;
     }
-    readPackets(netMessages?: (typeof NetMessage | undefined)[]) {
+    readPackets(netMessages?: (typeof NetMessage | undefined)[]): SourceDemo {
         netMessages = netMessages ??
             (this.isNewEngine() ? NetMessages.Portal2Engine : NetMessages.HalfLife2Engine);
 
@@ -332,7 +331,7 @@ export class SourceDemo {
 
         return this;
     }
-    writePackets() {
+    writePackets(): SourceDemo {
         for (const message of this.messages ?? []) {
             if (message instanceof Packet && message.packets) {
                 const data = SourceDemoBuffer.allocateBits(message.data!.length);
@@ -352,13 +351,13 @@ export class SourceDemo {
 
         return this;
     }
-    detectGame(sourceGames = SourceGames) {
+    detectGame(sourceGames = SourceGames): SourceDemo {
         this.game = sourceGames.find(
             (game) => game.directory === this.gameDirectory,
         );
         return this;
     }
-    getIntervalPerTick() {
+    getIntervalPerTick(): number {
         if (this.playbackTicks === undefined || this.playbackTime === undefined) {
             throw new Error('Cannot find tickrate without parsing the header.');
         }
@@ -370,7 +369,7 @@ export class SourceDemo {
         }
         return this.playbackTime / this.playbackTicks;
     }
-    getTickrate() {
+    getTickrate(): number {
         if (this.playbackTicks === undefined || this.playbackTime === undefined) {
             throw new Error('Cannot find tickrate without parsing the header.');
         }
@@ -382,7 +381,7 @@ export class SourceDemo {
         }
         return this.playbackTicks / this.playbackTime;
     }
-    adjustTicks() {
+    adjustTicks(): SourceDemo {
         if (!this.messages?.length) {
             throw new Error('Cannot adjust ticks without parsed messages.');
         }
@@ -404,7 +403,7 @@ export class SourceDemo {
 
         return this;
     }
-    adjustRange(endTick = 0, startTick = 0, tickrate: number | undefined = undefined) {
+    adjustRange(endTick = 0, startTick = 0, tickrate: number | undefined = undefined): SourceDemo {
         if (!this.messages?.length) {
             throw new Error('Cannot adjust range without parsed messages.');
         }
@@ -429,7 +428,7 @@ export class SourceDemo {
 
         return this;
     }
-    rebaseFrom(tick: number) {
+    rebaseFrom(tick: number): SourceDemo {
         if (!this.messages?.length) {
             throw new Error('Cannot adjust ticks without parsed messages.');
         }
@@ -454,7 +453,14 @@ export class SourceDemo {
 
         return this;
     }
-    getSyncedTicks(demo: SourceDemo, viewTolerance = 1, splitScreenIndex = 0) {
+    getSyncedTicks(demo: SourceDemo, viewTolerance = 1, splitScreenIndex = 0): {
+        source: number | undefined;
+        destination: number | undefined;
+        delta: number;
+        x: number | undefined;
+        y: number | undefined;
+        z: number | undefined;
+    }[] {
         if (!this.messages?.length || !demo.messages?.length) {
             throw new Error('Cannot adjust ticks without parsed messages.');
         }

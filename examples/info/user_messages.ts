@@ -1,7 +1,7 @@
-import { NetMessages, SourceDemoParser } from '../src/mod.ts';
+import { SourceDemoParser } from '../../src/mod.ts';
+import { SvcUserMessage } from '../../src/types/mod.ts';
 
 const file = Deno.args.at(0);
-
 if (!file) {
     console.error('[-] Demo path argument not specified!');
     Deno.exit(1);
@@ -12,14 +12,14 @@ const demo = SourceDemoParser.default()
     .parse(Deno.readFileSync(file));
 
 const userMessages = demo
-    .findPackets(NetMessages.SvcUserMessage);
+    .findPackets(SvcUserMessage);
 
 const unique = new Set();
 
 for (const { userMessage, msgDataLength } of userMessages) {
     const name = userMessage!.getName();
     if (unique.has(name)) {
-        continue;
+        //continue;
     }
 
     unique.add(name);

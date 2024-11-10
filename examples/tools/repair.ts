@@ -1,16 +1,13 @@
-/*
- * Copyright (c) 2024, NeKz
- *
- * SPDX-License-Identifier: MIT
- *
- * This repairs demos which:
- *      - contain pauses causing the game to freeze
- *      - are still running after a coop challenge mode run has finished
- *      - end abruptly causing an incorrect demo header and corrupted last message
- *      - are unplayable because of a patch that removed the CPointSurvey entity class
- */
+// Copyright (c) 2024, NeKz
+// SPDX-License-Identifier: MIT
 
-import { basename, dirname, join } from 'https://deno.land/std@0.140.0/path/posix.ts';
+// This repairs demos which:
+//      - contain pauses causing the game to freeze
+//      - are still running after a coop challenge mode run has finished
+//      - end abruptly causing an incorrect demo header and corrupted last message
+//      - are unplayable because of a patch that removed the CPointSurvey entity class
+
+import { basename, dirname, join } from 'jsr:@std/path';
 import {
     DemoMessages,
     Messages,
@@ -19,7 +16,7 @@ import {
     SourceDemo,
     SourceDemoBuffer,
     SourceDemoParser,
-} from '../src/mod.ts';
+} from '../../src/mod.ts';
 
 const file = Deno.args.at(0);
 const options = Deno.args.at(1)?.toLowerCase() ?? '';

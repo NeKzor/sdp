@@ -1,8 +1,5 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
 export class QAngle {
     pitch: number;
@@ -13,7 +10,7 @@ export class QAngle {
         this.yaw = yaw;
         this.roll = roll;
     }
-    *[Symbol.iterator]() {
+    *[Symbol.iterator](): Generator<number> {
         yield this.pitch;
         yield this.yaw;
         yield this.roll;

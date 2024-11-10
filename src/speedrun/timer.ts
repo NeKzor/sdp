@@ -1,12 +1,9 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
 import { Vector } from '../types/Vector.ts';
 import { ConsoleCmd, Packet } from '../messages.ts';
-import { SourceDemo } from '../demo.ts';
+import type { SourceDemo } from '../demo.ts';
 
 export class TimingResult {
     delta: number;
@@ -35,7 +32,7 @@ export class TimingResult {
     }: {
         playbackTicks: number;
         playbackTime: number;
-    }) {
+    }): TimingResult {
         this.ticks.after = playbackTicks;
         this.time.after = playbackTime;
         this.delta = Math.abs(this.ticks.before - this.ticks.after);
@@ -48,10 +45,10 @@ export class SourceTimer {
     constructor(splitScreenIndex: number) {
         this.splitScreenIndex = splitScreenIndex;
     }
-    static default() {
+    static default(): SourceTimer {
         return new SourceTimer(0);
     }
-    time(demo: SourceDemo) {
+    time(demo: SourceDemo): TimingResult {
         if (demo.playbackTicks === undefined || demo.playbackTime === undefined) {
             throw new Error('Cannot time speedrun when demo header was not parsed.');
         }
@@ -80,7 +77,7 @@ export class SourceTimer {
             playbackTime: demo.playbackTime,
         });
     }
-    checkRules(demo: SourceDemo, type: 'start' | 'end') {
+    checkRules(demo: SourceDemo, type: 'start' | 'end'): number | undefined {
         if (demo.mapName === undefined) {
             throw new Error('Cannot time speedrun when demo header was not parsed.');
         }

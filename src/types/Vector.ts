@@ -1,8 +1,5 @@
-/*
- * Copyright (c) 2018-2023, NeKz
- *
- * SPDX-License-Identifier: MIT
- */
+// Copyright (c) 2018-2024, NeKz
+// SPDX-License-Identifier: MIT
 
 export class Vector {
     x: number;
@@ -13,13 +10,13 @@ export class Vector {
         this.y = y;
         this.z = z;
     }
-    length() {
+    length(): number {
         return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
     }
-    length2D() {
+    length2D(): number {
         return Math.sqrt(this.x * this.x + this.y * this.y);
     }
-    *[Symbol.iterator]() {
+    *[Symbol.iterator](): Generator<number> {
         yield this.x;
         yield this.y;
         yield this.z;

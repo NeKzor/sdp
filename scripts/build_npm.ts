@@ -21,9 +21,18 @@ await copy('./demos/public', 'npm/script/demos/public', { overwrite: true });
 await build({
     entryPoints: [
         './src/mod.ts',
-        './src/speedrun/mod.ts',
-        './src/types/mod.ts',
-        './src/utils/mod.ts',
+        {
+            name: './speedrun',
+            path: './src/speedrun/mod.ts',
+        },
+        {
+            name: './types',
+            path: './src/types/mod.ts',
+        },
+        {
+            name: './utils',
+            path: './src/utils/mod.ts',
+        },
     ],
     testPattern: '**.ts',
     rootTestDir: './tests',

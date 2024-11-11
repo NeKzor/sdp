@@ -100,6 +100,7 @@ export type SarMessage =
     | {
         type: SarDataType.Pause;
         pauseTicks: number;
+        isTimed?: boolean;
     }
     | {
         type: SarDataType.WaitRun;
@@ -222,12 +223,13 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
                 slot: data.readUint8(),
             };
         case SarDataType.Pause:
-            if (len !== 5) {
+            if (len !== 5 && len !== 6) {
                 return { type: SarDataType.Invalid };
             }
             return {
                 type,
                 pauseTicks: data.readUint32(),
+                isTimed: len === 6 ? Boolean(data.readUint8()) : undefined,
             };
         case SarDataType.WaitRun:
             if (len < 6) {

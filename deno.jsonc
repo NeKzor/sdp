@@ -1,7 +1,7 @@
 {
     "name": "@nekz/sdp",
     "license": "MIT",
-    "version": "1.0.0-alpha.1",
+    "version": "0.10.0",
     "tasks": {
         // Run fmt, lint and type checks
         "check": "deno fmt --check && deno lint && deno task check:types",

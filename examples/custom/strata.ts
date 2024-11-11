@@ -247,5 +247,5 @@ console.dir(
     demo.findMessage(Messages.StringTable)
         ?.stringTables
         ?.find((table) => table.name === 'instancebaseline'),
-    { depth: 1 }
+    { depth: 1 },
 );

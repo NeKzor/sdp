@@ -244,7 +244,8 @@ demo.readPackets();
 demo.readStringTables();
 
 console.dir(
-    demo.findMessage<Messages.StringTable>((packet) => packet.getName() === 'StringTable')
+    demo.findMessage(Messages.StringTable)
         ?.stringTables
-        ?.find((x) => x.name === 'instancebaseline'),
+        ?.find((table) => table.name === 'instancebaseline'),
+    { depth: 1 }
 );

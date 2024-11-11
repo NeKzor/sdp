@@ -15,6 +15,7 @@
     "jsr:@std/bytes@0.223": "0.223.0",
     "jsr:@std/bytes@^1.0.2": "1.0.2",
     "jsr:@std/encoding@^1.0.5": "1.0.5",
+    "jsr:@std/fmt@*": "1.0.3",
     "jsr:@std/fmt@0.223": "0.223.0",
     "jsr:@std/fmt@1": "1.0.3",
     "jsr:@std/fs@0.223": "0.223.0",

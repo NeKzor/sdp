@@ -23,6 +23,8 @@
         "info:jumps": "deno run -R=demos examples/info/jump_stats.ts demos/public/portal2.dem",
         // Run SAR data example
         "info:sar": "deno run -R=demos examples/info/sar_data.ts demos/public/portal2_cm_latest.dem",
+        // Run Challenge Mode example
+        "info:cm": "deno run -R=demos examples/info/cm.ts demos/public/portal2_cm.dem",
         // Run Steam ID example
         "info:steam": "deno run -R=demos examples/info/steam_id.ts demos/public/portal2_coop.dem",
         // Run user messages example

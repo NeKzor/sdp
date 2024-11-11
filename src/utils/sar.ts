@@ -5,70 +5,6 @@ import type { SourceDemoBuffer } from '../buffer.ts';
 import type { SourceDemo } from '../demo.ts';
 import { DemoMessages } from '../messages.ts';
 
-export class SarMessage {
-    timescale?: number;
-    slot?: number;
-    pauseTicks?: number;
-    initialCvar?: {
-        cvar: string;
-        val: string;
-    };
-    checksum?: {
-        demoSum: number;
-        sarSum: number;
-    };
-    checksumV2?: {
-        sarSum: number;
-        signature: ArrayBuffer;
-    };
-    entityInput?: {
-        targetname: string;
-        classname: string;
-        inputname: string;
-        parameter: string;
-    };
-    portalPlacement?: {
-        x: number;
-        y: number;
-        z: number;
-        orange: boolean;
-    };
-    waitRun?: {
-        tick: number;
-        cmd: string;
-    };
-    hwaitRun?: {
-        ticks: number;
-        cmd: string;
-    };
-    speedrunTime?: {
-        nsplits: number;
-        splits?: {
-            name: string;
-            nsegs: number;
-            segs?: {
-                name: string;
-                ticks: number;
-            }[];
-        }[];
-    };
-    timestamp?: {
-        year: number;
-        mon: number;
-        day: number;
-        hour: number;
-        min: number;
-        sec: number;
-    };
-    fileChecksum?: {
-        path: string;
-        sum: number;
-    };
-
-    constructor(public type: SarDataType) {
-    }
-}
-
 export enum SarDataType {
     TimescaleCheat = 0x01,
     InitialCvar = 0x02,
@@ -94,10 +30,118 @@ export enum ChecksumV2State {
     Valid,
 }
 
+export type SarDataMessage<
+    T extends SarDataType,
+    M extends SarMessage = SarMessage,
+> = M extends { type: T } ? M : never;
+
+export function isSarMessage<T extends SarDataType>(type: T): (message: SarMessage) => message is SarDataMessage<T> {
+    return function (message: SarMessage): message is SarDataMessage<T> {
+        return message.type === type;
+    };
+}
+
+export type SarMessage =
+    | { type: SarDataType.Invalid }
+    | {
+        type: SarDataType.TimescaleCheat;
+        timescale: number;
+    }
+    | {
+        type: SarDataType.EntityInputSlot;
+        slot: number;
+        targetname: string;
+        classname: string;
+        inputname: string;
+        parameter: string;
+    }
+    | {
+        type: SarDataType.InitialCvar;
+        pauseTicks: number;
+    }
+    | {
+        type: SarDataType.InitialCvar;
+        cvar: string;
+        val: string;
+    }
+    | {
+        type: SarDataType.Checksum;
+        demoSum: number;
+        sarSum: number;
+    }
+    | {
+        type: SarDataType.ChecksumV2;
+        sarSum: number;
+        signature: ArrayBuffer;
+    }
+    | {
+        type: SarDataType.EntityInput;
+        targetname: string;
+        classname: string;
+        inputname: string;
+        parameter: string;
+    }
+    | {
+        type: SarDataType.PortalPlacement;
+        x: number;
+        y: number;
+        z: number;
+        slot: number;
+        orange: boolean;
+    }
+    | {
+        type: SarDataType.ChallengeFlags;
+        slot: number;
+    }
+    | {
+        type: SarDataType.CrouchFly;
+        slot: number;
+    }
+    | {
+        type: SarDataType.Pause;
+        pauseTicks: number;
+    }
+    | {
+        type: SarDataType.WaitRun;
+        tick: number;
+        cmd: string;
+    }
+    | {
+        type: SarDataType.HwaitRun;
+        ticks: number;
+        cmd: string;
+    }
+    | {
+        type: SarDataType.SpeedrunTime;
+        nsplits: number;
+        splits: {
+            name: string;
+            nsegs: number;
+            segs: {
+                name: string;
+                ticks: number;
+            }[];
+        }[];
+    }
+    | {
+        type: SarDataType.Timestamp;
+        year: number;
+        mon: number;
+        day: number;
+        hour: number;
+        min: number;
+        sec: number;
+    }
+    | {
+        type: SarDataType.FileChecksum;
+        path: string;
+        sum: number;
+    };
+
 // _parse_sar_data
 export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMessage => {
     if (len === 0) {
-        return new SarMessage(SarDataType.Invalid);
+        return { type: SarDataType.Invalid };
     }
 
     const type = data.readUint8() as SarDataType;
@@ -106,118 +150,118 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
         len = 9;
     }
 
-    const out = new SarMessage(SarDataType.Invalid);
-    out.type = type;
-
     switch (type) {
         case SarDataType.TimescaleCheat:
             if (len !== 5) {
-                out.type = SarDataType.Invalid;
-                break;
+                return { type: SarDataType.Invalid };
             }
-            out.timescale = data.readFloat32();
-            break;
+            return {
+                type,
+                timescale: data.readFloat32(),
+            };
         case SarDataType.InitialCvar:
-            out.initialCvar = {
+            return {
+                type,
                 cvar: data.readASCIIString(),
                 val: data.readASCIIString(),
             };
-            break;
-            // deno-lint-ignore no-fallthrough
         case SarDataType.EntityInputSlot:
-            out.slot = data.readUint8();
-        case SarDataType.EntityInput:
-            out.entityInput = {
+            return {
+                type,
+                slot: data.readUint8(),
                 targetname: data.readASCIIString(),
                 classname: data.readASCIIString(),
                 inputname: data.readASCIIString(),
                 parameter: data.readASCIIString(),
             };
-            break;
+        case SarDataType.EntityInput:
+            return {
+                type,
+                targetname: data.readASCIIString(),
+                classname: data.readASCIIString(),
+                inputname: data.readASCIIString(),
+                parameter: data.readASCIIString(),
+            };
         case SarDataType.Checksum:
             if (len !== 9) {
-                out.type = SarDataType.Invalid;
-                break;
+                return { type: SarDataType.Invalid };
             }
-            out.checksum = {
+            return {
+                type,
                 demoSum: data.readUint32(),
                 sarSum: data.readUint32(),
             };
-            break;
         case SarDataType.ChecksumV2:
             if (len !== 69) {
-                out.type = SarDataType.Invalid;
-                break;
+                return { type: SarDataType.Invalid };
             }
-            out.checksumV2 = {
+            return {
+                type,
                 sarSum: data.readUint32(),
                 signature: data.readArrayBuffer(64),
             };
-            break;
         case SarDataType.PortalPlacement:
             if (len !== 15) {
-                out.type = SarDataType.Invalid;
-                break;
+                return { type: SarDataType.Invalid };
             }
-            out.slot = data.readUint8();
-            out.portalPlacement = {
+            return {
+                type,
+                slot: data.readUint8(),
                 orange: Boolean(data.readUint8()),
                 x: data.readFloat32(),
                 y: data.readFloat32(),
                 z: data.readFloat32(),
             };
-            break;
         case SarDataType.ChallengeFlags:
         case SarDataType.CrouchFly:
             if (len !== 2) {
-                out.type = SarDataType.Invalid;
-                break;
+                return { type: SarDataType.Invalid };
             }
-            out.slot = data.readUint8();
-            break;
+            return {
+                type,
+                slot: data.readUint8(),
+            };
         case SarDataType.Pause:
             if (len !== 5) {
-                out.type = SarDataType.Invalid;
-                break;
+                return { type: SarDataType.Invalid };
             }
-            out.pauseTicks = data.readUint32();
-            break;
+            return {
+                type,
+                pauseTicks: data.readUint32(),
+            };
         case SarDataType.WaitRun:
             if (len < 6) {
-                out.type = SarDataType.Invalid;
-                break;
+                return { type: SarDataType.Invalid };
             }
-            out.waitRun = {
+            return {
+                type,
                 tick: data.readUint32(),
                 cmd: data.readASCIIString(),
             };
-            break;
         case SarDataType.HwaitRun:
             if (len < 6) {
-                out.type = SarDataType.Invalid;
-                break;
+                return { type: SarDataType.Invalid };
             }
-            out.hwaitRun = {
+            return {
+                type,
                 ticks: data.readUint32(),
                 cmd: data.readASCIIString(),
             };
-            break;
-        case SarDataType.SpeedrunTime:
+        case SarDataType.SpeedrunTime: {
             if (len < 5) {
-                out.type = SarDataType.Invalid;
-                break;
+                return { type: SarDataType.Invalid };
             }
-            out.speedrunTime = {
+
+            type SpeedrunMessage = SarDataMessage<SarDataType.SpeedrunTime>;
+            type SplitsType = SpeedrunMessage['splits'][0];
+
+            const out: SpeedrunMessage = {
+                type,
                 nsplits: data.readUint32(),
                 splits: [],
             };
-            for (let i = 0; i < out.speedrunTime.nsplits; ++i) {
-                type Inner<T> = T extends (infer U)[] ? U : T;
-                type SplitsType = Exclude<
-                    Inner<Exclude<SarMessage['speedrunTime'], undefined>['splits']>,
-                    undefined
-                >;
 
+            for (let i = 0; i < out.nsplits; ++i) {
                 const split: SplitsType = {
                     name: data.readASCIIString(),
                     nsegs: data.readUint32(),
@@ -225,27 +269,27 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
                 };
 
                 for (let j = 0; j < split.nsegs; ++j) {
-                    split.segs!.push({
+                    split.segs.push({
                         name: data.readASCIIString(),
                         ticks: data.readUint32(),
                     });
                 }
 
-                out.speedrunTime.splits!.push(split);
+                out.splits.push(split);
             }
 
             if (data.bitsLeft) {
-                out.type = SarDataType.Invalid;
-                break;
+                return { type: SarDataType.Invalid };
             }
 
-            break;
+            return out;
+        }
         case SarDataType.Timestamp:
             if (len !== 8) {
-                out.type = SarDataType.Invalid;
-                break;
+                return { type: SarDataType.Invalid };
             }
-            out.timestamp = {
+            return {
+                type,
                 year: data.readUint8() | (data.readUint8() << 8),
                 mon: data.readUint8() + 1,
                 day: data.readUint8(),
@@ -253,23 +297,18 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
                 min: data.readUint8(),
                 sec: data.readUint8(),
             };
-            break;
         case SarDataType.FileChecksum:
             if (len < 6) {
-                out.type = SarDataType.Invalid;
-                break;
+                return { type: SarDataType.Invalid };
             }
-            out.fileChecksum = {
+            return {
+                type,
                 sum: data.readUint32(),
                 path: data.readASCIIString(),
             };
-            break;
         default:
-            out.type = SarDataType.Invalid;
-            break;
+            return { type: SarDataType.Invalid };
     }
-
-    return out;
 };
 
 export const readSarMessages = (demo: SourceDemo): SarMessage[] => {

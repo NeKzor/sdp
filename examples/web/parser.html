@@ -246,11 +246,13 @@
         <script type="module">
             import {
                 DemoMessages,
-                SarTimer,
                 SourceDemo,
                 SourceDemoParser,
+            } from 'https://unpkg.com/@nekz/sdp@0.10.0/esm/src/mod.js';
+            import {
+                SarTimer,
                 SourceTimer,
-            } from 'https://unpkg.com/@nekz/sdp@0.3.0/esm/src/mod.js';
+            } from 'https://unpkg.com/@nekz/sdp@0.10.0/esm/src/speedrun/mod.js';
 
             const tabs = M.Tabs.getInstance(document.querySelector('.tabs'));
             const infoHeader = document.querySelector('#info-header');

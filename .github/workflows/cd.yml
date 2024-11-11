@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - '*'
+  workflow_dispatch:
 
 jobs:
   release:
@@ -43,7 +44,7 @@ jobs:
         run: npx jsr publish
 
       - name: Build for npm
-        run: deno task build:npm ${{ github.ref_name }}
+        run: deno task build:npm
 
       - name: Publish to npm
         env:

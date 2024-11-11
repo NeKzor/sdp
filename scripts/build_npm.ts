@@ -3,12 +3,9 @@
 
 import { build, emptyDir } from 'jsr:@deno/dnt@0.41.3';
 import { copy } from 'jsr:@std/fs@1.0.5';
+import { parse } from 'jsr:@std/jsonc@1.0.1';
 
-const version = Deno.args[0];
-if (!version) {
-    console.error('You must pass a package version as the first argument');
-    Deno.exit(1);
-}
+const { version } = parse(Deno.readTextFileSync('./deno.jsonc')) as { version: string };
 
 const outDir = './npm';
 

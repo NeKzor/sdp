@@ -62,6 +62,8 @@
     },
     "exports": {
         ".": "./src/mod.ts",
+        "./speedrun": "./src/speedrun/mod.ts",
+        "./types": "./src/types/mod.ts",
         "./utils": "./src/utils/mod.ts"
     },
     "publish": {

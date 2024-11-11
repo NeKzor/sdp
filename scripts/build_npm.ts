@@ -19,12 +19,20 @@ await copy('./demos/public', 'npm/esm/demos/public', { overwrite: true });
 await copy('./demos/public', 'npm/script/demos/public', { overwrite: true });
 
 await build({
-    entryPoints: ['./src/mod.ts'],
+    entryPoints: [
+        './src/mod.ts',
+        './src/speedrun/mod.ts',
+        './src/types/mod.ts',
+        './src/utils/mod.ts',
+    ],
     testPattern: '**.ts',
     rootTestDir: './tests',
     outDir,
     shims: {
         deno: true,
+    },
+    compilerOptions: {
+        lib: ['ESNext'],
     },
     package: {
         name: '@nekz/sdp',

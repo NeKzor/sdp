@@ -36,9 +36,17 @@ export class SourceDemoBuffer extends BitStream {
         this._index = this._startIndex;
         return this;
     }
-    // TODO: implementation
     readVarInt32(): number {
-        throw new Error('Not implemented yet!');
+        let result = 0;
+        let count = 0;
+        let b;
+        do {
+            if (count == 5) return result;
+            b = this.readUint8();
+            result |= (b & 0x7F) << (7 * count);
+            ++count;
+        } while (b & 0x80);
+        return result;
     }
     readVector(): Vector {
         return new Vector(

@@ -39,12 +39,7 @@ export class SourceDemoParser {
         return this;
     }
     prepare(buffer: ArrayBuffer): SourceBuffer {
-        const extended = new Uint8Array(
-            buffer.byteLength + 4 - (buffer.byteLength % 4),
-        );
-        extended.set(new Uint8Array(buffer), 0);
-
-        return new SourceBuffer(extended.buffer);
+        return new SourceBuffer(new Uint8Array(buffer).buffer);
     }
     parse(buffer: ArrayBuffer): SourceDemo {
         const buf = this.prepare(buffer);
@@ -74,8 +69,7 @@ export class SourceDemoParser {
             if (this.options.userCmds) demo.writeUserCmds();
         }
 
-        const padding = 4 - (bufferSize % 4);
-        const buffer = SourceBuffer.allocate(bufferSize + padding);
+        const buffer = SourceBuffer.allocate(bufferSize);
 
         demo.writeHeader(buffer);
         demo.writeMessages(buffer);

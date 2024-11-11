@@ -214,7 +214,7 @@ export class SvcSendTable extends NetMessage {
     override read(buf: SourceBuffer): void {
         this.needsDecoder = buf.readBoolean();
         this.propsLength = buf.readInt16LE();
-        this.props = buf.readBitsLE(this.propsLength);
+        this.props = buf.readUBitsLE(this.propsLength);
     }
     override write(buf: SourceBuffer): void {
         buf.writeBoolean(this.needsDecoder!);
@@ -238,7 +238,7 @@ export class SvcClassInfo extends NetMessage {
             let count = this.length;
             while (count--) {
                 this.serverClasses.push({
-                    classId: buf.readBitsLE(Math.log2(count) + 1),
+                    classId: buf.readUBitsLE(Math.log2(count) + 1),
                     className: buf.readCString(),
                     dataTableName: buf.readCString(),
                 });
@@ -281,13 +281,13 @@ export class SvcCreateStringTable extends NetMessage {
     override read(buf: SourceBuffer): void {
         this.name = buf.readCString();
         this.maxEntries = buf.readInt16LE();
-        this.numEntries = buf.readBitsLE(Math.log2(this.maxEntries) + 1);
-        this.stringDataLength = buf.readBitsLE(20);
+        this.numEntries = buf.readUBitsLE(Math.log2(this.maxEntries) + 1);
+        this.stringDataLength = buf.readUBitsLE(20);
         this.userDataFixedSize = buf.readBoolean();
-        this.userDataSize = this.userDataFixedSize ? buf.readBitsLE(12) : 0;
-        this.userDataSizeBits = this.userDataFixedSize ? buf.readBitsLE(4) : 0;
-        this.flags = buf.readBitsLE(2);
-        this.stringData = buf.readBuffer(this.stringDataLength);
+        this.userDataSize = this.userDataFixedSize ? buf.readUBitsLE(12) : 0;
+        this.userDataSizeBits = this.userDataFixedSize ? buf.readUBitsLE(4) : 0;
+        this.flags = buf.readUBitsLE(2);
+        this.stringData = buf.readBits(this.stringDataLength);
     }
     override write(buf: SourceBuffer): void {
         buf.writeCString(this.name!);
@@ -307,10 +307,10 @@ export class SvcUpdateStringTable extends NetMessage {
     stringDataLength?: number;
     stringData?: SourceBuffer;
     override read(buf: SourceBuffer): void {
-        this.tableId = buf.readBitsLE(5);
+        this.tableId = buf.readUBitsLE(5);
         this.numChangedEntries = buf.readBoolean() ? buf.readInt16LE() : 1;
-        this.stringDataLength = buf.readBitsLE(20);
-        this.stringData = buf.readBuffer(this.stringDataLength);
+        this.stringDataLength = buf.readUBitsLE(20);
+        this.stringData = buf.readBits(this.stringDataLength);
     }
     override write(buf: SourceBuffer): void {
         buf.writeBitsLE(this.tableId!, 5);
@@ -344,7 +344,7 @@ export class SvcVoiceData extends NetMessage {
         this.client = buf.readInt8();
         this.proximity = buf.readInt8();
         this.voiceDataLength = buf.readInt16LE();
-        this.voiceData = buf.readBuffer(this.voiceDataLength);
+        this.voiceData = buf.readBits(this.voiceDataLength);
     }
     override write(buf: SourceBuffer): void {
         buf.writeInt8(this.client!);
@@ -370,10 +370,10 @@ export class SvcSounds extends NetMessage {
     sounds?: SoundInfo[];
     override read(buf: SourceBuffer): void {
         this.reliableSound = buf.readBoolean();
-        this.soundsLength = this.reliableSound ? 1 : buf.readBitsLE(8);
+        this.soundsLength = this.reliableSound ? 1 : buf.readUBitsLE(8);
 
-        this.soundsDataLength = this.reliableSound ? buf.readBitsLE(8) : buf.readBitsLE(16);
-        this.soundsData = buf.readBuffer(this.soundsDataLength);
+        this.soundsDataLength = this.reliableSound ? buf.readUBitsLE(8) : buf.readUBitsLE(16);
+        this.soundsData = buf.readBits(this.soundsDataLength);
         this.sounds = [];
     }
     override write(buf: SourceBuffer): void {
@@ -386,7 +386,7 @@ export class SvcSounds extends NetMessage {
 export class SvcSetView extends NetMessage {
     entityIndex?: number;
     override read(buf: SourceBuffer): void {
-        this.entityIndex = buf.readBitsLE(11);
+        this.entityIndex = buf.readUBitsLE(11);
     }
     override write(buf: SourceBuffer): void {
         buf.writeBitsLE(this.entityIndex!, 11);
@@ -421,10 +421,10 @@ export class SvcBspDecal extends NetMessage {
     lowPriority?: boolean;
     override read(buf: SourceBuffer): void {
         this.pos = buf.readVectorCoord();
-        this.decalTextureIndex = buf.readBitsLE(9);
+        this.decalTextureIndex = buf.readUBitsLE(9);
         if (buf.readBoolean()) {
-            this.entityIndex = buf.readBitsLE(11);
-            this.modelIndex = buf.readBitsLE(11);
+            this.entityIndex = buf.readUBitsLE(11);
+            this.modelIndex = buf.readUBitsLE(11);
         }
         this.lowPriority = buf.readBoolean();
     }
@@ -444,9 +444,9 @@ export class SvcSplitScreen extends NetMessage {
     dataLength?: number;
     data?: SourceBuffer;
     override read(buf: SourceBuffer): void {
-        this.unk = buf.readBitsLE(1);
-        this.dataLength = buf.readBitsLE(11);
-        this.data = buf.readBuffer(this.dataLength);
+        this.unk = buf.readUBitsLE(1);
+        this.dataLength = buf.readUBitsLE(11);
+        this.data = buf.readBits(this.dataLength);
     }
     override write(buf: SourceBuffer): void {
         buf.writeBitsLE(this.unk!, 1);
@@ -461,8 +461,8 @@ export class SvcUserMessage extends NetMessage {
     userMessage?: UserMessage;
     override read(buf: SourceBuffer): void {
         this.msgType = buf.readInt8();
-        this.msgDataLength = buf.readBitsLE(12);
-        this.msgData = buf.readBuffer(this.msgDataLength);
+        this.msgDataLength = buf.readUBitsLE(12);
+        this.msgData = buf.readBits(this.msgDataLength);
 
         const userMessageType = UserMessages.Portal2Engine[this.msgType];
         if (userMessageType) {
@@ -489,10 +489,10 @@ export class SvcEntityMessage extends NetMessage {
     dataLength?: number;
     data?: SourceBuffer;
     override read(buf: SourceBuffer): void {
-        this.entityIndex = buf.readBitsLE(11);
-        this.classId = buf.readBitsLE(9);
-        this.dataLength = buf.readBitsLE(11);
-        this.data = buf.readBuffer(this.dataLength);
+        this.entityIndex = buf.readUBitsLE(11);
+        this.classId = buf.readUBitsLE(9);
+        this.dataLength = buf.readUBitsLE(11);
+        this.data = buf.readBits(this.dataLength);
     }
     override write(buf: SourceBuffer): void {
         buf.writeBitsLE(this.entityIndex!, 11);
@@ -507,7 +507,7 @@ export class SvcGameEvent extends NetMessage {
     event?: GameEvent;
     data?: SourceBuffer;
     override read(buf: SourceBuffer): void {
-        this.data = buf.readBuffer(buf.readBitsLE(11));
+        this.data = buf.readBits(buf.readUBitsLE(11));
 
         if (SvcGameEvent.gameEventManager) {
             const data = this.data.clone();
@@ -535,14 +535,14 @@ export class SvcPacketEntities extends NetMessage {
     dataLength?: number;
     data?: SourceBuffer;
     override read(buf: SourceBuffer): void {
-        this.maxEntries = buf.readBitsLE(11);
+        this.maxEntries = buf.readUBitsLE(11);
         this.isDelta = buf.readBoolean();
         this.deltaFrom = this.isDelta ? buf.readInt32LE() : 0;
         this.baseLine = buf.readBoolean();
-        this.updatedEntries = buf.readBitsLE(11);
-        this.dataLength = buf.readBitsLE(20);
+        this.updatedEntries = buf.readUBitsLE(11);
+        this.dataLength = buf.readUBitsLE(20);
         this.updateBaseline = buf.readBoolean();
-        this.data = buf.readBuffer(this.dataLength);
+        this.data = buf.readBits(this.dataLength);
     }
     override write(buf: SourceBuffer): void {
         buf.writeBitsLE(this.maxEntries!, 11);
@@ -561,8 +561,8 @@ export class SvcTempEntities extends NetMessage {
     data?: SourceBuffer;
     override read(buf: SourceBuffer): void {
         this.numEntries = buf.readInt8();
-        this.dataLength = buf.readBitsLE(17);
-        this.data = buf.readBuffer(this.dataLength);
+        this.dataLength = buf.readUBitsLE(17);
+        this.data = buf.readBits(this.dataLength);
     }
     override write(buf: SourceBuffer): void {
         buf.writeInt8(this.numEntries!);
@@ -573,7 +573,7 @@ export class SvcTempEntities extends NetMessage {
 export class SvcPrefetch extends NetMessage {
     soundIndex?: number;
     override read(buf: SourceBuffer): void {
-        this.soundIndex = buf.readBitsLE(13);
+        this.soundIndex = buf.readUBitsLE(13);
     }
     override write(buf: SourceBuffer): void {
         buf.writeBitsLE(this.soundIndex!, 13);
@@ -586,7 +586,7 @@ export class SvcMenu extends NetMessage {
     override read(buf: SourceBuffer): void {
         this.menuType = buf.readInt16LE();
         this.dataLength = buf.readInt32LE();
-        this.data = buf.readBuffer(this.dataLength);
+        this.data = buf.readBits(this.dataLength);
     }
     override write(buf: SourceBuffer): void {
         buf.writeInt16LE(this.menuType!);
@@ -599,9 +599,9 @@ export class SvcGameEventList extends NetMessage {
     dataLength?: number;
     data?: SourceBuffer;
     override read(buf: SourceBuffer): void {
-        this.events = buf.readBitsLE(9);
-        this.dataLength = buf.readBitsLE(20);
-        this.data = buf.readBuffer(this.dataLength);
+        this.events = buf.readUBitsLE(9);
+        this.dataLength = buf.readUBitsLE(20);
+        this.data = buf.readBits(this.dataLength);
 
         const gameEvents = [];
         let events = this.events;
@@ -652,7 +652,7 @@ export class SvcPaintMapData extends NetMessage {
     data?: SourceBuffer;
     override read(buf: SourceBuffer): void {
         this.dataLength = buf.readInt32LE();
-        this.data = buf.readBuffer(this.dataLength);
+        this.data = buf.readBits(this.dataLength);
     }
     override write(buf: SourceBuffer): void {
         buf.writeInt32LE(this.data!.buffer.byteLength);

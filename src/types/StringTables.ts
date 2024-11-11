@@ -78,7 +78,7 @@ export class StringTableEntry {
     }
     read(buf: SourceBuffer, type: StringTableEntryType | undefined) {
         this.length = buf.readInt16LE();
-        this.dataBuffer = buf.readBuffer(this.length);
+        this.dataBuffer = buf.readBytes(this.length);
 
         if (type) {
             this.data = new type();

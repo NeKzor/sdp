@@ -5,14 +5,14 @@ export class GameEventDescriptor {
     name?: string;
     keys?: Map<string, number>;
     read(buf: SourceBuffer) {
-        this.eventId = buf.readBitsLE(9);
+        this.eventId = buf.readUBitsLE(9);
         this.name = buf.readCString();
         this.keys = new Map();
 
-        let type = buf.readBitsLE(3);
+        let type = buf.readUBitsLE(3);
         while (type !== 0) {
             this.keys.set(buf.readCString(), type);
-            type = buf.readBitsLE(3);
+            type = buf.readUBitsLE(3);
         }
     }
     write(buf: SourceBuffer) {
@@ -50,7 +50,7 @@ export class GameEventManager {
         this.gameEvents = gameEvents;
     }
     deserializeEvent(buf: SourceBuffer): GameEvent {
-        const eventId = buf.readBitsLE(9);
+        const eventId = buf.readUBitsLE(9);
 
         const descriptor = this.gameEvents.find(
             (descriptor) => descriptor.eventId === eventId,

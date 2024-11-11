@@ -154,7 +154,7 @@ export class StrataSourceDemo extends SourceDemo {
 
                 if (data.bitsLeft) {
                     // TODO
-                    //message.restData = data.readBuffer(data.bitsLeft);
+                    //message.restData = data.readBits(data.bitsLeft);
                 }
 
                 message.packets = packets;
@@ -198,7 +198,7 @@ export class StrataSourceDemo extends SourceDemo {
                 }
 
                 if (data.bitsLeft) {
-                    dataTable.restData = data.readBuffer(data.bitsLeft);
+                    dataTable.restData = data.readBits(data.bitsLeft);
                 }
 
                 message.dataTable = dataTable;

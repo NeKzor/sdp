@@ -30,8 +30,8 @@ export class UserCmd {
         if (buf.readBoolean()) this.buttons = buf.readInt32LE();
         if (buf.readBoolean()) this.impulse = buf.readInt8();
         if (buf.readBoolean()) {
-            this.weaponSelect = buf.readBitsLE(11);
-            if (buf.readBoolean()) this.weaponSubtype = buf.readBitsLE(6);
+            this.weaponSelect = buf.readUBitsLE(11);
+            if (buf.readBoolean()) this.weaponSubtype = buf.readUBitsLE(6);
         }
         if (buf.readBoolean()) this.mouseDx = buf.readInt16LE();
         if (buf.readBoolean()) this.mouseDy = buf.readInt16LE();

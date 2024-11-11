@@ -276,12 +276,14 @@ export class SourceDemo {
                 const data = message.data.clone();
 
                 while (data.bitsLeft > 6) {
-                    const type = data.readBitsLE(6);
+                    const type = data.readUBitsLE(6);
 
                     const NetMessage = netMessages.at(type);
+                    //console.log({type, NetMessage});
                     if (NetMessage) {
                         const packet = new NetMessage(type);
                         packet.read(data);
+                        //console.log(packet);
                         packets.push(packet);
                     } else {
                         throw new Error(`Net message type ${type} unknown!`);

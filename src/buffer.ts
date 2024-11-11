@@ -16,11 +16,13 @@ export class SourceBuffer {
     public buffer: ArrayBuffer;
     public view: DataView;
     public bitOffset: number;
+    public maximumBits: number;
 
-    constructor(buffer: ArrayBuffer) {
+    constructor(buffer: ArrayBuffer, maximumBits = 0) {
         this.buffer = buffer;
         this.view = new DataView(this.buffer);
         this.bitOffset = 0;
+        this.maximumBits = maximumBits;
     }
 
     get isAligned(): boolean {
@@ -48,7 +50,7 @@ export class SourceBuffer {
     clone(): SourceBuffer {
         const array = new Uint8Array(this.buffer.byteLength);
         array.set(new Uint8Array(this.buffer), 0);
-        return new SourceBuffer(array.buffer);
+        return new SourceBuffer(array.buffer, this.maximumBits);
     }
 
     reset(): SourceBuffer {
@@ -140,7 +142,29 @@ export class SourceBuffer {
     peekBuffer(offset: number, bytes: number): SourceBuffer {
         return new SourceBuffer(this.peekArray(offset, bytes).buffer);
     }
-    readBuffer(bytes: number): SourceBuffer {
+    readBits(bits: number): SourceBuffer {
+        const start = this.bitOffset;
+
+        const alignment = start % 8;
+        const endAlignment = bits % 8;
+
+        const isStartAligned = alignment === 0;
+        const isEndAligned = endAlignment === 0;
+
+        const bytes = isEndAligned ? bits / 8 : ((bits - endAlignment) / 8) + 1;
+
+        if (isStartAligned) {
+            return new SourceBuffer(this.buffer.slice(start / 8, bytes), bits);
+        }
+
+        const buf = new Uint8Array(bytes);
+        for (let i = 0; i < bytes; i += 1) {
+            buf[i] = this.readBitsLE(8);
+        }
+
+        return new SourceBuffer(buf.buffer, bits);
+    }
+    readBytes(bytes: number): SourceBuffer {
         return new SourceBuffer(this.readArray(bytes).buffer);
     }
     writeBuffer(buffer: SourceBuffer): SourceBuffer {
@@ -153,17 +177,17 @@ export class SourceBuffer {
 
     peekCString(offset: number): string {
         const start = offset;
-        while (this.peekUint8(offset)) {
+        do {
             offset += 8;
-        }
+        } while (this.peekUint8(offset));
         return textDecoder.decode(this.peekArray(start, ((offset + 8) - start) / 8)).slice(0, -1);
     }
     readCString(): string {
         const start = this.bitOffset;
         let end = start;
-        while (this.peekUint8(end)) {
+        do {
             end += 8;
-        }
+        } while (this.peekUint8(end));
         return textDecoder.decode(this.readArray(((end + 8) - start) / 8)).slice(0, -1);
     }
     writeCString(value: string): SourceBuffer {
@@ -188,6 +212,11 @@ export class SourceBuffer {
     }
 
     peekUBitsLE(offset: number, count: number): number {
+        const limit = this.maximumBits;
+        if (limit && offset + count > limit) {
+            throw new Error(`Trying to read past maximum bit length: ${offset} + ${count} > ${limit}`);
+        }
+
         let value = 0;
         const view = this.view;
 
@@ -691,14 +720,23 @@ export class SourceBuffer {
     }
 
     readVarInt32(): number {
-        throw new Error('readVarInt32() not implemented!');
+        let result = 0;
+        let count = 0;
+        let b;
+        do {
+            if (count == 5) return result;
+            b = this.readUint8();
+            result |= (b & 0x7F) << (7 * count);
+            ++count;
+        } while (b & 0x80);
+        return result;
     }
 
     peekVector(offset: number): Vector {
         return new Vector(
             this.peekFloat32LE(offset),
-            this.peekFloat32LE(offset + 8),
-            this.peekFloat32LE(offset + 16),
+            this.peekFloat32LE(offset + 32),
+            this.peekFloat32LE(offset + 64),
         );
     }
     readVector(): Vector {
@@ -716,8 +754,8 @@ export class SourceBuffer {
     peekQAngle(offset: number): QAngle {
         return new QAngle(
             this.peekFloat32LE(offset),
-            this.peekFloat32LE(offset + 8),
-            this.peekFloat32LE(offset + 16),
+            this.peekFloat32LE(offset + 32),
+            this.peekFloat32LE(offset + 64),
         );
     }
     readQAngle(): QAngle {

@@ -37,11 +37,11 @@ export class SoundInfo {
         this.readEntityIndex = buf.readBoolean();
         if (this.readEntityIndex) {
             this.readEntityIndexShort = buf.readBoolean();
-            this.entityIndex = this.readEntityIndexShort ? buf.readBitsLE(5) : buf.readBitsLE(11);
+            this.entityIndex = this.readEntityIndexShort ? buf.readUBitsLE(5) : buf.readUBitsLE(11);
         }
-        this.soundNum = buf.readBoolean() ? buf.readBitsLE(13) : 0;
-        this.flags = buf.readBoolean() ? buf.readBitsLE(9) : 0;
-        this.channel = buf.readBoolean() ? buf.readBitsLE(3) : 0;
+        this.soundNum = buf.readBoolean() ? buf.readUBitsLE(13) : 0;
+        this.flags = buf.readBoolean() ? buf.readUBitsLE(9) : 0;
+        this.channel = buf.readBoolean() ? buf.readUBitsLE(3) : 0;
         this.isAmbient = buf.readBoolean();
         this.isSentence = buf.readBoolean();
 
@@ -52,15 +52,15 @@ export class SoundInfo {
             } else if (buf.readBoolean()) {
                 this.sequenceNumber = 1;
             } else {
-                this.sequenceNumber = buf.readBitsLE(10);
+                this.sequenceNumber = buf.readUBitsLE(10);
             }
 
-            this.volume = buf.readBoolean() ? buf.readBitsLE(7) / 127 : 0;
-            this.soundLevel = buf.readBoolean() ? buf.readBitsLE(9) : 0;
-            this.pitch = buf.readBoolean() ? buf.readBitsLE(8) : 0;
+            this.volume = buf.readBoolean() ? buf.readUBitsLE(7) / 127 : 0;
+            this.soundLevel = buf.readBoolean() ? buf.readUBitsLE(9) : 0;
+            this.pitch = buf.readBoolean() ? buf.readUBitsLE(8) : 0;
 
             if (buf.readBoolean()) {
-                this.delay = buf.readBitsLE(13) / 1_000;
+                this.delay = buf.readUBitsLE(13) / 1_000;
                 if (this.delay < 0) {
                     this.delay *= 10;
                 }
@@ -70,12 +70,12 @@ export class SoundInfo {
             }
 
             this.origin = {
-                x: buf.readBoolean() ? buf.readBitsLE(12) * 8 : 0,
-                y: buf.readBoolean() ? buf.readBitsLE(12) * 8 : 0,
-                z: buf.readBoolean() ? buf.readBitsLE(12) * 8 : 0,
+                x: buf.readBoolean() ? buf.readUBitsLE(12) * 8 : 0,
+                y: buf.readBoolean() ? buf.readUBitsLE(12) * 8 : 0,
+                z: buf.readBoolean() ? buf.readUBitsLE(12) * 8 : 0,
             };
 
-            this.speakerEntity = buf.readBoolean() ? buf.readBitsLE(12) : 0;
+            this.speakerEntity = buf.readBoolean() ? buf.readUBitsLE(12) : 0;
         }
     }
     write(buf: SourceBuffer) {

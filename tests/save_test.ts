@@ -5,16 +5,16 @@ import { assertEquals } from 'jsr:@std/assert';
 import { describe, it } from 'jsr:@std/testing/bdd';
 import { SourceDemoParser } from '../src/mod.ts';
 
-describe.skip('SourceDemoParser', () => {
+describe('SourceDemoParser', () => {
     describe('#Portal 2', () => {
         it('parse and save unedited demo correctly', () => {
             try {
-                const buffer = Deno.readFileSync('./demos/public/portal2.dem');
+                const buffer = Deno.readFileSync('./demos/public/portal2_sar_timer2.dem');
                 const parser = SourceDemoParser.default();
                 const demo = parser.parse(buffer);
                 const saved = parser.save(demo, buffer.byteLength);
 
-                assertEquals(buffer.byteLength, saved.byteLength, 'Equal buffer sizes');
+                assertEquals(saved.byteLength, buffer.byteLength, 'Equal buffer sizes');
 
                 for (let i = 0; i < buffer.byteLength; ++i) {
                     const a = buffer.at(i);
@@ -55,7 +55,7 @@ describe.skip('SourceDemoParser', () => {
                 throw err;
             }
         });
-        it('fully parse and save without mutating anything', () => {
+        it.only('fully parse and save without mutating anything', () => {
             try {
                 const buffer = Deno.readFileSync('./demos/public/p2sm_old.dem');
                 const parser = SourceDemoParser.default();

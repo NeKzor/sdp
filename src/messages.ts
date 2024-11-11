@@ -71,7 +71,7 @@ export class Packet implements IPacket {
 
         msg.inSequence = buf.readInt32LE();
         msg.outSequence = buf.readInt32LE();
-        msg.data = buf.readBuffer(buf.readInt32LE());
+        msg.data = buf.readBytes(buf.readInt32LE());
         return msg;
     }
     static serialize(buf: SourceBuffer, packet: IPacket): void {
@@ -144,7 +144,9 @@ export class SyncTick implements ISyncTick {
         msg.slot = buf.readUint8();
         return msg;
     }
-    static serialize(_buf: SourceBuffer, _syncTick: ISyncTick) {
+    static serialize(buf: SourceBuffer, syncTick: ISyncTick) {
+        buf.writeInt32LE(syncTick.tick);
+        buf.writeUint8(syncTick.slot);
     }
 
     static matches(msg: IMessage): msg is SyncTick {
@@ -226,7 +228,7 @@ export class UserCmd implements IUserCmd {
         msg.tick = buf.readInt32LE();
         msg.slot = buf.readUint8();
         msg.cmd = buf.readInt32LE();
-        msg.data = buf.readBuffer(buf.readInt32LE());
+        msg.data = buf.readBytes(buf.readInt32LE());
         return msg;
     }
     static serialize(buf: SourceBuffer, userCmd: IUserCmd): void {
@@ -284,7 +286,7 @@ export class DataTable implements IDataTable {
         const msg = new this();
         msg.tick = buf.readInt32LE();
         msg.slot = buf.readUint8();
-        msg.data = buf.readBuffer(buf.readInt32LE());
+        msg.data = buf.readBytes(buf.readInt32LE());
         return msg;
     }
     static serialize(buf: SourceBuffer, dataTable: IDataTable): void {
@@ -336,7 +338,7 @@ export class Stop implements IStop {
         const msg = new this();
         msg.tick = buf.readInt32LE();
         msg.slot = buf.readUint8();
-        msg.restData = buf.readBuffer(buf.bitsLeft / 8);
+        msg.restData = buf.readBits(buf.bitsLeft);
         return msg;
     }
     static serialize(buf: SourceBuffer, stop: IStop): void {
@@ -380,7 +382,7 @@ export class CustomData implements ICustomData {
         msg.tick = buf.readInt32LE();
         msg.slot = buf.readUint8();
         msg.callbackIndex = buf.readInt32LE();
-        msg.data = buf.readBuffer(buf.readInt32LE());
+        msg.data = buf.readBytes(buf.readInt32LE());
         return msg;
     }
     static serialize(buf: SourceBuffer, customData: ICustomData): void {
@@ -425,7 +427,7 @@ export class StringTable implements IStringTable {
         const msg = new this();
         msg.tick = buf.readInt32LE();
         msg.slot = buf.readUint8();
-        msg.data = buf.readBuffer(buf.readInt32LE());
+        msg.data = buf.readBytes(buf.readInt32LE());
         return msg;
     }
     static serialize(buf: SourceBuffer, stringTable: IStringTable): void {

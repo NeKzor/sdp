@@ -94,11 +94,6 @@ export enum ChecksumV2State {
     Valid,
 }
 
-export interface SarResult {
-    demo: SourceDemo;
-    messages: SarMessage[];
-}
-
 // _parse_sar_data
 export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMessage => {
     if (len === 0) {
@@ -277,7 +272,7 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
     return out;
 };
 
-export const readSarData = (demo: SourceDemo): SarResult => {
+export const readSarMessages = (demo: SourceDemo): SarMessage[] => {
     const messages: SarMessage[] = [];
 
     for (const message of demo.findMessages(DemoMessages.CustomData)) {
@@ -294,8 +289,5 @@ export const readSarData = (demo: SourceDemo): SarResult => {
         messages.push(readSarMessageData(data, len));
     }
 
-    return {
-        demo,
-        messages,
-    } as SarResult;
+    return messages;
 };

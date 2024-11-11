@@ -1,5 +1,5 @@
 import { SourceDemoParser } from '../../src/mod.ts';
-import { readSarData, SarDataType } from '../../src/utils/mod.ts';
+import { readSarMessages, SarDataType } from '../../src/utils/mod.ts';
 
 const file = Deno.args.at(0);
 if (!file) {
@@ -10,7 +10,7 @@ if (!file) {
 const demo = SourceDemoParser.default()
     .parse(Deno.readFileSync(file));
 
-const { messages } = readSarData(demo);
+const messages = readSarMessages(demo);
 
 const message = messages.find(({ type }) => type === SarDataType.SpeedrunTime);
 if (!message) {

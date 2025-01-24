@@ -476,17 +476,27 @@ SAR: ${formatTime(demo.sar.delta * demo.getIntervalPerTick())}`,
                         if (input.find((i) => i.type === 'IN_FORWARD') !== undefined) {
                             drawButton('W', 2 + offset, 0, buttonSize);
                         }
-                        if (input.find((i) => i.type === 'IN_USE') !== undefined) drawButton('E', 3 + offset, 0, buttonSize);
-                        if (input.find((i) => i.type === 'IN_RELOAD') !== undefined) drawButton('R', 4 + offset, 0, buttonSize);
+                        if (input.find((i) => i.type === 'IN_USE') !== undefined) {
+                            drawButton('E', 3 + offset, 0, buttonSize);
+                        }
+                        if (input.find((i) => i.type === 'IN_RELOAD') !== undefined) {
+                            drawButton('R', 4 + offset, 0, buttonSize);
+                        }
                         if (input.find((i) => i.type === 'IN_MOVELEFT') !== undefined) {
                             drawButton('A', 1 + offset, 1, buttonSize);
                         }
-                        if (input.find((i) => i.type === 'IN_BACK') !== undefined) drawButton('S', 2 + offset, 1, buttonSize);
+                        if (input.find((i) => i.type === 'IN_BACK') !== undefined) {
+                            drawButton('S', 2 + offset, 1, buttonSize);
+                        }
                         if (input.find((i) => i.type === 'IN_MOVERIGHT') !== undefined) {
                             drawButton('D', 3 + offset, 1, buttonSize);
                         }
-                        if (input.find((i) => i.type === 'IN_SPEED') !== undefined) drawButton('Shift', offset, 1, buttonSize);
-                        if (input.find((i) => i.type === 'IN_DUCK') !== undefined) drawButton('Ctrl', offset, 2, buttonSize);
+                        if (input.find((i) => i.type === 'IN_SPEED') !== undefined) {
+                            drawButton('Shift', offset, 1, buttonSize);
+                        }
+                        if (input.find((i) => i.type === 'IN_DUCK') !== undefined) {
+                            drawButton('Ctrl', offset, 2, buttonSize);
+                        }
                         if (input.find((i) => i.type === 'IN_JUMP') !== undefined) {
                             drawButton('Spacebar', 1 + offset, 2, buttonSize, buttonSize, 4);
                         }
@@ -512,7 +522,15 @@ SAR: ${formatTime(demo.sar.delta * demo.getIntervalPerTick())}`,
 
                 setTimeout(() => globalThis.requestAnimationFrame(drawInputs), 1000 / drawingFps);
             };
-            const drawButton = (text, column, row, width, height, widthFactor = 1, heightFactor = 1) => {
+            const drawButton = (
+                text,
+                column,
+                row,
+                width,
+                height,
+                widthFactor = 1,
+                heightFactor = 1,
+            ) => {
                 height = height || width;
                 // Rectangle
                 inputContext.fillStyle = `rgba(0, 0, 0, 0.5)`;
@@ -683,7 +701,10 @@ SAR: ${formatTime(demo.sar.delta * demo.getIntervalPerTick())}`,
                         })
                     );
                 } else {
-                    globalThis.demos = demos.sort((a, b) => (a.fileInfo.index < b.fileInfo.index ? -1 : 1));
+                    globalThis.demos = demos.sort((
+                        a,
+                        b,
+                    ) => (a.fileInfo.index < b.fileInfo.index ? -1 : 1));
                 }
 
                 for (const demo of demos) {
@@ -843,7 +864,9 @@ SAR: ${formatTime(demo.sar.delta * demo.getIntervalPerTick())}`,
                                 view.z.push(lastInput.y + input.y);
                                 view.y.push(input.tick);
                                 lastInput = input;
-                                view.text.push(`Tick ${lastInput.tick} (${lastInput.x}|${lastInput.y})`);
+                                view.text.push(
+                                    `Tick ${lastInput.tick} (${lastInput.x}|${lastInput.y})`,
+                                );
                             });
                     } else {
                         demo.findMessages(DemoMessages.Packet).forEach(({
@@ -946,7 +969,9 @@ SAR: ${formatTime(demo.sar.delta * demo.getIntervalPerTick())}`,
                     if (min >= 60) {
                         let hrs = min / 60;
                         min = Math.floor(min % 60);
-                        return `${Math.floor(hrs)}:${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}.${ms}`;
+                        return `${Math.floor(hrs)}:${min.toString().padStart(2, '0')}:${
+                            sec.toString().padStart(2, '0')
+                        }.${ms}`;
                     }
                     return `${Math.floor(min)}:${sec.toString().padStart(2, '0')}.${ms}`;
                 }

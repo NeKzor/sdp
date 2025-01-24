@@ -290,7 +290,7 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
                     case 1: {
                         out.nrules = data.readUint32();
                         out.rules = [];
-        
+
                         for (let i = 0; i < out.nrules; ++i) {
                             out.rules.push({
                                 name: data.readASCIIString(),

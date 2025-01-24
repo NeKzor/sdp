@@ -123,6 +123,11 @@ export type SarMessage =
                 ticks: number;
             }[];
         }[];
+        nrules?: number;
+        rules?: {
+            name: string;
+            data: string;
+        }[];
     }
     | {
         type: SarDataType.Timestamp;
@@ -280,8 +285,21 @@ export const readSarMessageData = (data: SourceDemoBuffer, len: number): SarMess
                 out.splits.push(split);
             }
 
-            if (data.bitsLeft) {
-                return { type: SarDataType.Invalid };
+            if (data.bitsLeft >= 32) {
+                switch (data.readUint32()) {
+                    case 1: {
+                        out.nrules = data.readUint32();
+                        out.rules = [];
+        
+                        for (let i = 0; i < out.nrules; ++i) {
+                            out.rules.push({
+                                name: data.readASCIIString(),
+                                data: data.readASCIIString(),
+                            });
+                        }
+                        break;
+                    }
+                }
             }
 
             return out;
